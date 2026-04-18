@@ -17,10 +17,11 @@ COPY packages/mcp-server ./packages/mcp-server
 RUN pnpm install --frozen-lockfile=false --offline
 RUN pnpm --filter @lab-ai/shared build \
  && pnpm --filter @lab-ai/mcp-server build
+RUN pnpm --filter @lab-ai/mcp-server deploy --prod /deploy-mcp
 
 FROM node:20-bookworm-slim AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
-RUN corepack enable
-COPY --from=build /app /app
-CMD ["node", "packages/mcp-server/dist/server.js"]
+COPY --from=build /deploy-mcp /app
+USER node
+CMD ["node", "dist/server.js"]

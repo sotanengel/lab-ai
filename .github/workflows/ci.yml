@@ -21,6 +21,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Takumi Guard (full protection)
+        if: ${{ vars.TAKUMI_BOT_ID != '' }}
         uses: flatt-security/setup-takumi-guard-npm@v1
         with:
           bot-id: ${{ vars.TAKUMI_BOT_ID }}
@@ -35,7 +36,7 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile=false
+        run: pnpm install --no-frozen-lockfile
 
       - name: Biome lint & format
         run: pnpm run lint
@@ -57,6 +58,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Takumi Guard (full protection)
+        if: ${{ vars.TAKUMI_BOT_ID != '' }}
         uses: flatt-security/setup-takumi-guard-npm@v1
         with:
           bot-id: ${{ vars.TAKUMI_BOT_ID }}

@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# Fast checks before push: lint + typecheck.
+pnpm run lint
+pnpm run typecheck

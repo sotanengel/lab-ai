@@ -20,11 +20,14 @@ RUN pnpm install --frozen-lockfile=false --offline
 RUN pnpm --filter @lab-ai/shared build \
  && pnpm --filter @lab-ai/db build \
  && pnpm --filter @lab-ai/api build
+RUN pnpm --filter @lab-ai/api deploy --prod /deploy-api
 
 FROM node:20-bookworm-slim AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
-RUN corepack enable
-COPY --from=build /app /app
+COPY --from=build /deploy-api /app
+USER node
 EXPOSE 8787
-CMD ["node", "apps/api/dist/server.js"]
+HEALTHCHECK --interval=10s --timeout=3s --retries=5 \
+  CMD node -e "fetch('http://localhost:8787/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "dist/server.js"]

@@ -63,6 +63,17 @@ pnpm --filter @lab-ai/web dev # start Next.js at :3000
 | `pnpm run db:generate`| Generate Drizzle migrations from schema  |
 | `pnpm run db:migrate` | Apply migrations to `$DATABASE_URL`      |
 
+## Pre-commit hooks
+
+`pnpm install` sets up Husky. Staged files are formatted with Biome on every
+commit, and `pnpm run lint` / `pnpm run typecheck` run on push.
+
+```bash
+pnpm install                # installs husky hooks automatically
+git commit -m "..."         # runs lint-staged on staged files
+git push                    # runs full lint + typecheck
+```
+
 ## Supply-chain security — Takumi Guard
 
 All npm installs are routed through [Takumi Guard](https://flatt.tech/takumi/features/guard) (GMO Flatt Security) as a registry proxy. See `.npmrc` and `.github/workflows/ci.yml` for the setup.
