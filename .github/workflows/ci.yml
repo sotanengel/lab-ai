@@ -44,6 +44,18 @@ jobs:
       - name: Vitest
         run: pnpm run test
 
+      - name: Vitest coverage (services ≥ 70%)
+        run: pnpm run coverage
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: apps/api/coverage/**
+          if-no-files-found: ignore
+          retention-days: 7
+
   docker-smoke:
     name: Docker build smoke
     runs-on: ubuntu-latest

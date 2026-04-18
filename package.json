@@ -15,17 +15,20 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "test": "pnpm -r run test",
+    "coverage": "pnpm --filter @lab-ai/api run coverage",
     "typecheck": "pnpm -r run typecheck",
     "db:generate": "pnpm --filter @lab-ai/db run generate",
     "db:migrate": "pnpm --filter @lab-ai/db run migrate",
     "e2e": "playwright test",
     "e2e:install": "playwright install --with-deps chromium",
+    "perf:check": "pnpm --filter @lab-ai/api exec tsx ../../scripts/perf-check.ts",
     "prepare": "husky"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,json,md}": ["biome check --write --no-errors-on-unmatched"]
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.10.0",
     "@biomejs/biome": "1.9.4",
     "@playwright/test": "1.48.2",
     "husky": "9.1.6",
