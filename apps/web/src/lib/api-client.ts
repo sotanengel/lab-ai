@@ -98,7 +98,7 @@ export async function fetchExperimentStats(
 }
 
 export interface PreviewResponse {
-  columns: Array<Omit<ColumnDefinition, "id">>;
+  columns: Omit<ColumnDefinition, "id">[];
   rows: ExperimentRow[];
   totalRows: number;
 }

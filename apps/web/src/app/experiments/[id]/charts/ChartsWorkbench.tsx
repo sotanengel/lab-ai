@@ -304,7 +304,7 @@ function prepareChartData(
 }
 
 interface BarDataResult {
-  data: Array<Record<string, number | string>>;
+  data: Record<string, number | string>[];
   categories: string[];
 }
 
@@ -429,7 +429,7 @@ function BarChartView({
   categories,
   categoryColumn,
 }: {
-  data: Array<Record<string, number | string>>;
+  data: Record<string, number | string>[];
   xColumn: string;
   yColumns: string[];
   categories: string[];
@@ -465,7 +465,7 @@ function HistogramView({
   bins,
 }: {
   columnName: string;
-  bins: Array<{ label: string; count: number }>;
+  bins: { label: string; count: number }[];
 }) {
   if (bins.length === 0) {
     return <EmptyState message="ヒストグラム対象の数値カラムを選択してください" />;

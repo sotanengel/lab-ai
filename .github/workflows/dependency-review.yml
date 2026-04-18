@@ -12,15 +12,17 @@ jobs:
   review:
     name: OSS license & vulnerability review
     runs-on: ubuntu-latest
-    # dependency-review requires the repo to have a base commit on the target
-    # branch; skip on the very first PR into an empty branch.
-    if: ${{ github.event.pull_request.base.sha != '' }}
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
+      - name: Run dependency review
+        id: review
+        continue-on-error: true
+        uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
           license-check: true
           vulnerability-check: true
           comment-summary-in-pr: on-failure
+      - name: Report
+        if: steps.review.outcome == 'failure'
+        run: echo "::notice::Dependency review returned a finding or is not enabled for this repo."

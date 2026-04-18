@@ -2,7 +2,7 @@ import type { ColumnDefinition, ExperimentRow, SourceFormat } from "@lab-ai/shar
 import { inferColumnType } from "./column-inference.js";
 
 export interface ParseResult {
-  columns: Array<Omit<ColumnDefinition, "id">>;
+  columns: Omit<ColumnDefinition, "id">[];
   rows: ExperimentRow[];
 }
 
