@@ -1,12 +1,14 @@
 "use client";
 
 import { BoxPlot } from "@/components/BoxPlot";
+import { FilterPanel } from "@/components/FilterPanel";
 import {
   buildHistogram,
   extractNumericSeries,
   isNumericColumn,
   toNumberOrNull,
 } from "@/lib/chart-utils";
+import { type RowFilters, applyFilters, createEmptyFilters } from "@/lib/filter-utils";
 import type { ColumnDefinition, ExperimentDetail, ExperimentRow } from "@lab-ai/shared";
 import { useMemo, useRef, useState } from "react";
 import {
@@ -51,26 +53,29 @@ export function ChartsWorkbench({ detail, rows }: Props) {
   });
   const [categoryColumn, setCategoryColumn] = useState<string>("");
   const [binCount, setBinCount] = useState<number>(20);
+  const [filters, setFilters] = useState<RowFilters>(() => createEmptyFilters());
   const containerRef = useRef<HTMLDivElement>(null);
 
   const numericColumns = useMemo(() => detail.columns.filter(isNumericColumn), [detail.columns]);
+
+  const filteredRows = useMemo(() => applyFilters(rows, filters), [rows, filters]);
 
   const toggleY = (name: string) => {
     setYColumns((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
   };
 
   const chartData = useMemo(
-    () => prepareChartData(rows, xColumn, yColumns),
-    [rows, xColumn, yColumns],
+    () => prepareChartData(filteredRows, xColumn, yColumns),
+    [filteredRows, xColumn, yColumns],
   );
   const histogramSource = yColumns[0] ?? xColumn;
   const histogramData = useMemo(
-    () => buildHistogram(extractNumericSeries(rows, histogramSource), binCount),
-    [rows, histogramSource, binCount],
+    () => buildHistogram(extractNumericSeries(filteredRows, histogramSource), binCount),
+    [filteredRows, histogramSource, binCount],
   );
   const barData = useMemo(
-    () => buildBarData(rows, xColumn, yColumns, categoryColumn),
-    [rows, xColumn, yColumns, categoryColumn],
+    () => buildBarData(filteredRows, xColumn, yColumns, categoryColumn),
+    [filteredRows, xColumn, yColumns, categoryColumn],
   );
 
   const exportPng = async () => {
@@ -225,6 +230,18 @@ export function ChartsWorkbench({ detail, rows }: Props) {
             SVG 保存
           </button>
         </div>
+
+        <div className="pt-2 border-t border-white/10">
+          <FilterPanel
+            columns={detail.columns}
+            rows={rows}
+            filters={filters}
+            onChange={setFilters}
+          />
+          <p className="mt-2 text-[10px] opacity-60">
+            対象 {filteredRows.length.toLocaleString()} / {rows.length.toLocaleString()} 行
+          </p>
+        </div>
       </aside>
 
       <section
@@ -253,7 +270,7 @@ export function ChartsWorkbench({ detail, rows }: Props) {
           <BoxPlot
             series={yColumns.map((name, i) => ({
               label: name,
-              values: extractNumericSeries(rows, name),
+              values: extractNumericSeries(filteredRows, name),
               color: SERIES_COLORS[i % SERIES_COLORS.length] ?? "#4f8cff",
             }))}
           />
