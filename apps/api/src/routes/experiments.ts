@@ -20,7 +20,7 @@ import {
   listExperiments,
   updateExperiment,
 } from "../repositories/experiment-repository.js";
-import { exportAsCsv, exportAsJson } from "../services/export-service.js";
+import { exportAsCsv, exportAsJson, exportAsXlsx } from "../services/export-service.js";
 import { sha256Hex } from "../services/hash-service.js";
 import {
   isImportSuggestConfigured,
@@ -121,8 +121,8 @@ export const experimentsRouter = new Hono<AppEnv>()
   })
   .get(
     "/:id/export",
-    zValidator("query", z.object({ format: z.enum(["csv", "json"]).default("csv") })),
-    (c) => {
+    zValidator("query", z.object({ format: z.enum(["csv", "json", "xlsx"]).default("csv") })),
+    async (c) => {
       const db = c.get("db");
       const id = c.req.param("id");
       const detail = getExperimentDetail(db, id);
@@ -134,6 +134,15 @@ export const experimentsRouter = new Hono<AppEnv>()
         c.header("content-type", "application/json; charset=utf-8");
         c.header("content-disposition", `attachment; filename="${safeName}.json"`);
         return c.body(exportAsJson(detail, rows));
+      }
+      if (format === "xlsx") {
+        const buf = await exportAsXlsx(detail, rows);
+        c.header(
+          "content-type",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        );
+        c.header("content-disposition", `attachment; filename="${safeName}.xlsx"`);
+        return c.body(buf);
       }
       c.header("content-type", "text/csv; charset=utf-8");
       c.header("content-disposition", `attachment; filename="${safeName}.csv"`);

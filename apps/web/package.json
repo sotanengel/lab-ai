@@ -15,7 +15,10 @@
     "next": "15.0.2",
     "react": "19.0.0-rc-02c0e824-20241028",
     "react-dom": "19.0.0-rc-02c0e824-20241028",
+    "react-markdown": "9.0.1",
     "recharts": "2.13.0",
+    "rehype-sanitize": "6.0.0",
+    "remark-gfm": "4.0.0",
     "zod": "3.23.8"
   },
   "devDependencies": {

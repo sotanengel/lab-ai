@@ -1,5 +1,6 @@
 "use client";
 
+import { Markdown } from "@/components/Markdown";
 import {
   type ChatStreamMessage,
   createAdviceNote,
@@ -205,9 +206,13 @@ export function AdviceChat({ experiment }: Props) {
               <div className="text-[10px] uppercase tracking-wider opacity-60 mb-1">
                 {m.role === "user" ? "あなた" : "AI"}
               </div>
-              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                {m.content || (m.streaming ? "考え中..." : "")}
-              </pre>
+              {m.role === "assistant" && m.content ? (
+                <Markdown>{m.content}</Markdown>
+              ) : (
+                <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
+                  {m.content || (m.streaming ? "考え中..." : "")}
+                </pre>
+              )}
               {m.role === "assistant" && !m.streaming && m.content && (
                 <div className="mt-2 flex justify-end">
                   <button

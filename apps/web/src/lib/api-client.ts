@@ -139,7 +139,7 @@ export async function archiveExperiment(id: string): Promise<void> {
   await request<void>(`/api/experiments/${id}`, { method: "DELETE" });
 }
 
-export function exportExperimentUrl(id: string, format: "csv" | "json"): string {
+export function exportExperimentUrl(id: string, format: "csv" | "json" | "xlsx"): string {
   return `${resolveBaseUrl()}/api/experiments/${id}/export?format=${format}`;
 }
 
