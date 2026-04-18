@@ -206,10 +206,20 @@ export function ImportWizard() {
     text,
   ]);
 
+  const stepNumber = (n: number, label: string) => (
+    <div className="flex items-center gap-3 mb-4">
+      <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[var(--accent)]/15 text-[var(--accent-light)] text-xs font-bold border border-[var(--accent)]/20">
+        {n}
+      </span>
+      <h2 className="text-base font-semibold text-white">{label}</h2>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
-      <section className="rounded-md border border-white/10 bg-white/5 p-5">
-        <h2 className="text-lg font-semibold mb-3">1. ファイル選択</h2>
+      {/* Step 1: File Selection */}
+      <section className="card p-6">
+        {stepNumber(1, "ファイル選択")}
         <div
           onDragOver={(e) => {
             e.preventDefault();
@@ -217,14 +227,32 @@ export function ImportWizard() {
           }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={onDrop}
-          className={`rounded-md border-2 border-dashed p-6 text-center transition ${
-            isDragging ? "border-[var(--accent)] bg-white/10" : "border-white/20"
+          className={`rounded-xl border-2 border-dashed p-8 text-center transition-all ${
+            isDragging
+              ? "border-[var(--accent)] bg-[var(--accent)]/[0.06]"
+              : "border-white/[0.08] hover:border-white/[0.15]"
           }`}
         >
-          <p className="text-sm opacity-80">
-            ここにファイルをドラッグ&ドロップ、または以下から選択してください
-          </p>
-          <label className="mt-3 inline-flex cursor-pointer items-center rounded-md bg-white/10 px-3 py-1.5 text-sm hover:bg-white/15">
+          <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.06] flex items-center justify-center mx-auto mb-4">
+            <svg
+              aria-hidden="true"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-white/30"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </div>
+          <p className="text-sm text-white/50 mb-3">ここにファイルをドラッグ&ドロップ</p>
+          <label className="btn-secondary text-sm cursor-pointer">
             ファイルを選択
             <input
               type="file"
@@ -234,20 +262,26 @@ export function ImportWizard() {
             />
           </label>
           {filename && (
-            <div className="mt-3 text-xs opacity-80 space-y-0.5">
-              <p>選択中: {filename}</p>
-              {fileSize > 0 && <p>サイズ: {fileSize.toLocaleString()} バイト</p>}
-              {fileHash && <p className="font-mono text-[10px] break-all">SHA-256: {fileHash}</p>}
+            <div className="mt-4 inline-flex flex-col items-center gap-1 rounded-lg bg-white/[0.04] border border-white/[0.06] px-4 py-3">
+              <p className="text-sm text-white/70 font-medium">{filename}</p>
+              {fileSize > 0 && (
+                <p className="text-xs text-white/30">{fileSize.toLocaleString()} バイト</p>
+              )}
+              {fileHash && (
+                <p className="font-mono text-[10px] text-white/20 break-all max-w-xs">
+                  SHA-256: {fileHash}
+                </p>
+              )}
             </div>
           )}
         </div>
 
         {aiConfigured && (
-          <div className="mt-4 rounded-md border border-white/10 bg-black/30 p-3">
+          <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm">AI による取込設定の自動検出</p>
-                <p className="text-xs opacity-60">
+                <p className="text-sm font-medium text-white/70">AI による取込設定の自動検出</p>
+                <p className="text-xs text-white/30 mt-0.5">
                   フォーマット・ヘッダ・カラム型をファイル冒頭から推論します
                 </p>
               </div>
@@ -255,46 +289,40 @@ export function ImportWizard() {
                 type="button"
                 onClick={runAiSuggest}
                 disabled={aiBusy || !text.trim()}
-                className="rounded-md bg-white/10 px-3 py-1.5 text-sm hover:bg-white/15 disabled:opacity-40"
+                className="btn-secondary text-sm disabled:opacity-40"
               >
                 {aiBusy ? "解析中..." : "AI に任せる"}
               </button>
             </div>
             {aiSuggestion && (
-              <div className="mt-3 rounded-md bg-white/5 p-3 text-xs space-y-1">
-                <p>
-                  <strong>フォーマット:</strong> {aiSuggestion.sourceFormat}
-                  <span className="opacity-60">
-                    {" "}
-                    · ヘッダ: {aiSuggestion.hasHeader ? "あり" : "なし"}
+              <div className="mt-3 rounded-lg bg-white/[0.03] border border-white/[0.06] p-4 text-xs space-y-2">
+                <p className="text-white/60">
+                  <strong className="text-white/80">フォーマット:</strong>{" "}
+                  {aiSuggestion.sourceFormat}
+                  <span className="text-white/30 ml-2">
+                    ヘッダ: {aiSuggestion.hasHeader ? "あり" : "なし"}
                   </span>
                 </p>
                 {aiSuggestion.proposedName && (
-                  <p>
-                    <strong>提案名:</strong> {aiSuggestion.proposedName}
+                  <p className="text-white/60">
+                    <strong className="text-white/80">提案名:</strong> {aiSuggestion.proposedName}
                   </p>
                 )}
-                <p>
-                  <strong>カラム候補:</strong>
-                </p>
-                <ul className="list-disc list-inside">
+                <p className="text-white/80 font-medium">カラム候補:</p>
+                <ul className="list-disc list-inside text-white/50 space-y-0.5">
                   {aiSuggestion.columns.map((col) => (
                     <li key={col.name}>
-                      {col.name} ({col.type}
+                      <span className="text-white/70">{col.name}</span> ({col.type}
                       {col.unit ? `, ${col.unit}` : ""})
                       {col.description ? (
-                        <span className="opacity-70"> — {col.description}</span>
+                        <span className="text-white/30"> — {col.description}</span>
                       ) : null}
                     </li>
                   ))}
                 </ul>
-                {aiSuggestion.notes && <p className="opacity-70">メモ: {aiSuggestion.notes}</p>}
+                {aiSuggestion.notes && <p className="text-white/30">メモ: {aiSuggestion.notes}</p>}
                 <div className="pt-1">
-                  <button
-                    type="button"
-                    onClick={applyAiSuggestion}
-                    className="rounded-md bg-[var(--accent)] px-2 py-1 text-xs text-white"
-                  >
+                  <button type="button" onClick={applyAiSuggestion} className="btn-primary text-xs">
                     カラム設定に反映
                   </button>
                 </div>
@@ -304,11 +332,11 @@ export function ImportWizard() {
         )}
 
         <div className="mt-4 grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">
-          <label className="text-sm opacity-80">フォーマット</label>
+          <label className="text-sm text-white/50">フォーマット</label>
           <select
             value={format}
             onChange={(e) => setFormat(e.target.value as SourceFormat)}
-            className="rounded-md bg-white/10 px-3 py-1.5 text-sm"
+            className="rounded-lg bg-white/[0.06] border border-white/[0.08] px-3 py-2 text-sm text-white/80 focus:border-[var(--accent)]/50"
           >
             <option value="csv">CSV</option>
             <option value="tsv">TSV</option>
@@ -317,42 +345,43 @@ export function ImportWizard() {
           </select>
         </div>
 
-        <details className="mt-4">
-          <summary className="cursor-pointer text-sm opacity-80">または直接貼り付け</summary>
+        <details className="mt-4 group">
+          <summary className="cursor-pointer text-sm text-white/40 hover:text-white/60 transition-colors">
+            または直接貼り付け
+          </summary>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="mt-2 h-40 w-full rounded-md bg-black/40 p-3 font-mono text-xs"
+            className="mt-3 h-40 w-full rounded-lg bg-black/30 border border-white/[0.06] p-3 font-mono text-xs text-white/70 placeholder-white/20 focus:border-[var(--accent)]/50"
             placeholder="time,value\n1,10.5\n2,11.2"
           />
         </details>
 
-        <div className="mt-4 flex justify-end">
+        <div className="mt-5 flex justify-end">
           <button
             type="button"
             onClick={runPreview}
             disabled={!text.trim()}
-            className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+            className="btn-primary disabled:opacity-40"
           >
             プレビュー
           </button>
         </div>
       </section>
 
+      {/* Step 2: Column Config */}
       {preview && (
-        <section className="rounded-md border border-white/10 bg-white/5 p-5">
-          <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-lg font-semibold">2. カラム確認</h2>
-            <p className="text-xs opacity-70">
-              全 {preview.totalRows.toLocaleString()} 行 · 先頭 {preview.rows.length} 行をプレビュー
-            </p>
-          </div>
-          <div className="overflow-auto rounded-md border border-white/10">
+        <section className="card p-6">
+          {stepNumber(2, "カラム確認")}
+          <p className="text-xs text-white/30 mb-4 -mt-2">
+            全 {preview.totalRows.toLocaleString()} 行 · 先頭 {preview.rows.length} 行をプレビュー
+          </p>
+          <div className="overflow-auto rounded-lg border border-white/[0.06]">
             <table className="w-full text-xs">
-              <thead className="bg-white/5">
+              <thead className="bg-white/[0.03]">
                 <tr>
                   {columns.map((col, idx) => (
-                    <th key={idx} className="whitespace-nowrap px-3 py-2 text-left align-bottom">
+                    <th key={idx} className="whitespace-nowrap px-3 py-3 text-left align-bottom">
                       <input
                         value={col.name}
                         onChange={(e) => {
@@ -360,9 +389,9 @@ export function ImportWizard() {
                             prev.map((c, i) => (i === idx ? { ...c, name: e.target.value } : c)),
                           );
                         }}
-                        className="w-full rounded-sm bg-white/10 px-2 py-1 text-xs"
+                        className="w-full rounded-md bg-white/[0.06] border border-white/[0.08] px-2 py-1 text-xs text-white/80"
                       />
-                      <div className="mt-1 flex gap-1">
+                      <div className="mt-1.5 flex gap-1.5">
                         <select
                           value={col.type}
                           onChange={(e) => {
@@ -371,7 +400,7 @@ export function ImportWizard() {
                               prev.map((c, i) => (i === idx ? { ...c, type: next } : c)),
                             );
                           }}
-                          className="rounded-sm bg-white/10 px-1.5 py-0.5 text-[10px]"
+                          className="rounded-md bg-white/[0.06] border border-white/[0.08] px-1.5 py-0.5 text-[10px] text-white/60"
                         >
                           {COLUMN_TYPES.map((t) => (
                             <option key={t} value={t}>
@@ -387,7 +416,7 @@ export function ImportWizard() {
                             );
                           }}
                           placeholder="単位"
-                          className="w-16 rounded-sm bg-white/10 px-1.5 py-0.5 text-[10px]"
+                          className="w-16 rounded-md bg-white/[0.06] border border-white/[0.08] px-1.5 py-0.5 text-[10px] text-white/60 placeholder-white/20"
                         />
                       </div>
                     </th>
@@ -396,9 +425,9 @@ export function ImportWizard() {
               </thead>
               <tbody>
                 {preview.rows.slice(0, 20).map((row, i) => (
-                  <tr key={i} className="border-t border-white/5">
+                  <tr key={i} className="border-t border-white/[0.04]">
                     {columns.map((col, j) => (
-                      <td key={j} className="whitespace-nowrap px-3 py-1.5 opacity-80">
+                      <td key={j} className="whitespace-nowrap px-3 py-2 text-white/50">
                         {formatCellValue(row[col.name])}
                       </td>
                     ))}
@@ -410,34 +439,35 @@ export function ImportWizard() {
         </section>
       )}
 
+      {/* Step 3: Metadata */}
       {preview && (
-        <section className="rounded-md border border-white/10 bg-white/5 p-5">
-          <h2 className="text-lg font-semibold mb-3">3. メタデータ</h2>
+        <section className="card p-6">
+          {stepNumber(3, "メタデータ")}
           <div className="grid gap-4 sm:grid-cols-2">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="opacity-80">実験名 *</span>
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-white/50 text-xs font-medium">実験名 *</span>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="rounded-md bg-white/10 px-3 py-2 text-sm"
+                className="rounded-lg bg-white/[0.06] border border-white/[0.08] px-3 py-2 text-sm text-white/80 placeholder-white/20 focus:border-[var(--accent)]/50"
                 placeholder="例: 2026-04-18 熱伝導測定"
               />
             </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="opacity-80">タグ（カンマ区切り）</span>
+            <label className="flex flex-col gap-1.5 text-sm">
+              <span className="text-white/50 text-xs font-medium">タグ（カンマ区切り）</span>
               <input
                 value={tagsInput}
                 onChange={(e) => setTagsInput(e.target.value)}
-                className="rounded-md bg-white/10 px-3 py-2 text-sm"
+                className="rounded-lg bg-white/[0.06] border border-white/[0.08] px-3 py-2 text-sm text-white/80 placeholder-white/20 focus:border-[var(--accent)]/50"
                 placeholder="例: trial,thermal"
               />
             </label>
-            <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-              <span className="opacity-80">説明</span>
+            <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
+              <span className="text-white/50 text-xs font-medium">説明</span>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[80px] rounded-md bg-white/10 px-3 py-2 text-sm"
+                className="min-h-[80px] rounded-lg bg-white/[0.06] border border-white/[0.08] px-3 py-2 text-sm text-white/80 placeholder-white/20 focus:border-[var(--accent)]/50"
                 placeholder="実験条件・目的など"
               />
             </label>
@@ -446,9 +476,25 @@ export function ImportWizard() {
       )}
 
       {errorMessage && (
-        <p className="rounded-md border border-red-500/40 bg-red-500/10 p-3 text-sm text-red-200">
-          {errorMessage}
-        </p>
+        <div className="error-card flex items-start gap-3">
+          <svg
+            aria-hidden="true"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#ef4444"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="flex-shrink-0 mt-0.5"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+          <p className="text-sm text-red-300">{errorMessage}</p>
+        </div>
       )}
 
       {preview && (
@@ -457,7 +503,7 @@ export function ImportWizard() {
             type="button"
             onClick={submit}
             disabled={!canSubmit || submitting}
-            className="rounded-md bg-[var(--accent)] px-5 py-2 text-sm font-semibold text-white disabled:opacity-40"
+            className="btn-primary disabled:opacity-40"
           >
             {submitting ? "登録中..." : "実験を登録"}
           </button>
