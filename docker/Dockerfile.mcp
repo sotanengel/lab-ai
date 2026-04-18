@@ -6,9 +6,9 @@ WORKDIR /app
 
 FROM base AS build
 ENV NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
-COPY pnpm-workspace.yaml pnpm-lock.yaml* package.json tsconfig.base.json ./
-COPY packages/shared ./packages/shared
-COPY packages/mcp-server ./packages/mcp-server
+COPY pnpm-workspace.yaml pnpm-lock.yaml* package.json tsconfig.base.json biome.json ./
+COPY packages ./packages
+COPY apps ./apps
 RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter @lab-ai/shared build \
  && pnpm --filter @lab-ai/mcp-server build
