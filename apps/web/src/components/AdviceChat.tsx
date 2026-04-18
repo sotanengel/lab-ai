@@ -3,7 +3,9 @@
 import { Markdown } from "@/components/Markdown";
 import {
   type ChatStreamMessage,
+  clearAdviceHistory,
   createAdviceNote,
+  fetchAdviceHistory,
   fetchAdviceStatus,
   fetchContextDocuments,
   streamAdviceChat,
@@ -35,10 +37,21 @@ export function AdviceChat({ experiment }: Props) {
     let cancelled = false;
     (async () => {
       try {
-        const [status, docs] = await Promise.all([fetchAdviceStatus(), fetchContextDocuments()]);
+        const [status, docs, history] = await Promise.all([
+          fetchAdviceStatus(),
+          fetchContextDocuments(),
+          fetchAdviceHistory(experiment.id).catch(() => ({ items: [] })),
+        ]);
         if (cancelled) return;
         setAiConfigured(status.configured);
         setContextDocs(docs.items);
+        setMessages(
+          history.items.map((m) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+          })),
+        );
       } catch (err) {
         if (cancelled) return;
         setError(err instanceof Error ? err.message : "初期化に失敗しました");
@@ -48,7 +61,18 @@ export function AdviceChat({ experiment }: Props) {
       cancelled = true;
       controllerRef.current?.abort();
     };
-  }, []);
+  }, [experiment.id]);
+
+  const clearHistory = async () => {
+    if (messages.length === 0) return;
+    if (!confirm("チャット履歴をすべて削除しますか？")) return;
+    try {
+      await clearAdviceHistory(experiment.id);
+      setMessages([]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "履歴の削除に失敗しました");
+    }
+  };
 
   const toggleDoc = (id: string) => {
     setSelectedDocIds((prev) => {
@@ -155,11 +179,23 @@ export function AdviceChat({ experiment }: Props) {
 
   return (
     <div className="rounded-md border border-white/10 bg-white/5 p-4 flex flex-col gap-3 min-h-[520px]">
-      <header>
-        <h2 className="text-lg font-semibold">AI アドバイス</h2>
-        <p className="text-xs opacity-70 mt-0.5">
-          実験「{experiment.name}」の統計・サンプル行が自動的に注入されます。
-        </p>
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold">AI アドバイス</h2>
+          <p className="text-xs opacity-70 mt-0.5">
+            実験「{experiment.name}」の統計・サンプル行が自動的に注入されます。
+          </p>
+        </div>
+        {messages.length > 0 && (
+          <button
+            type="button"
+            onClick={clearHistory}
+            className="rounded-md border border-white/10 px-2 py-1 text-xs hover:bg-white/10"
+            title="このチャットの履歴をすべて削除"
+          >
+            履歴クリア
+          </button>
+        )}
       </header>
 
       <details className="rounded-md bg-black/30 p-3 text-sm">
