@@ -4,6 +4,7 @@ const links = [
   { href: "/", label: "ホーム" },
   { href: "/experiments/new", label: "取込" },
   { href: "/compare", label: "比較" },
+  { href: "/dashboard", label: "ダッシュボード" },
   { href: "/context", label: "コンテキスト" },
 ] as const;
 
