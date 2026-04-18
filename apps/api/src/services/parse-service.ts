@@ -27,9 +27,9 @@ function parseCsvLine(line: string, delimiter: string): string[] {
   for (let i = 0; i < line.length; i += 1) {
     const ch = line[i];
     if (inQuotes) {
-      if (ch === "\"") {
-        if (line[i + 1] === "\"") {
-          current += "\"";
+      if (ch === '"') {
+        if (line[i + 1] === '"') {
+          current += '"';
           i += 1;
         } else {
           inQuotes = false;
@@ -37,7 +37,7 @@ function parseCsvLine(line: string, delimiter: string): string[] {
       } else {
         current += ch;
       }
-    } else if (ch === "\"") {
+    } else if (ch === '"') {
       inQuotes = true;
     } else if (ch === delimiter) {
       fields.push(current);

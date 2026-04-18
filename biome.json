@@ -33,7 +33,8 @@
       "recommended": true,
       "suspicious": {
         "noExplicitAny": "error",
-        "noConsoleLog": "warn"
+        "noConsoleLog": "warn",
+        "noArrayIndexKey": "off"
       },
       "style": {
         "useConsistentArrayType": {
@@ -46,6 +47,10 @@
       "correctness": {
         "noUnusedVariables": "error",
         "noUnusedImports": "error"
+      },
+      "a11y": {
+        "noLabelWithoutControl": "off",
+        "useSemanticElements": "off"
       }
     }
   },

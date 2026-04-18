@@ -1,13 +1,9 @@
 "use client";
 
+import { type PreviewResponse, createExperiment, previewImport } from "@/lib/api-client";
 import type { ColumnType, SourceFormat } from "@lab-ai/shared";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
-import {
-  createExperiment,
-  previewImport,
-  type PreviewResponse,
-} from "@/lib/api-client";
 
 const COLUMN_TYPES: readonly ColumnType[] = [
   "number",
@@ -47,16 +43,19 @@ export function ImportWizard() {
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const handleFile = useCallback(async (file: File) => {
-    const contents = await file.text();
-    const detected = detectFormatFromFilename(file.name);
-    setFilename(file.name);
-    setFormat(detected);
-    setText(contents);
-    if (!name) {
-      setName(file.name.replace(/\.[^.]+$/, ""));
-    }
-  }, [name]);
+  const handleFile = useCallback(
+    async (file: File) => {
+      const contents = await file.text();
+      const detected = detectFormatFromFilename(file.name);
+      setFilename(file.name);
+      setFormat(detected);
+      setText(contents);
+      if (!name) {
+        setName(file.name.replace(/\.[^.]+$/, ""));
+      }
+    },
+    [name],
+  );
 
   const onDrop = useCallback(
     async (ev: React.DragEvent<HTMLDivElement>) => {
@@ -160,9 +159,7 @@ export function ImportWizard() {
               onChange={onFileInput}
             />
           </label>
-          {filename && (
-            <p className="mt-3 text-xs opacity-80">選択中: {filename}</p>
-          )}
+          {filename && <p className="mt-3 text-xs opacity-80">選択中: {filename}</p>}
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">
@@ -180,9 +177,7 @@ export function ImportWizard() {
         </div>
 
         <details className="mt-4">
-          <summary className="cursor-pointer text-sm opacity-80">
-            または直接貼り付け
-          </summary>
+          <summary className="cursor-pointer text-sm opacity-80">または直接貼り付け</summary>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -221,9 +216,7 @@ export function ImportWizard() {
                         value={col.name}
                         onChange={(e) => {
                           setColumns((prev) =>
-                            prev.map((c, i) =>
-                              i === idx ? { ...c, name: e.target.value } : c,
-                            ),
+                            prev.map((c, i) => (i === idx ? { ...c, name: e.target.value } : c)),
                           );
                         }}
                         className="w-full rounded-sm bg-white/10 px-2 py-1 text-xs"
@@ -249,9 +242,7 @@ export function ImportWizard() {
                           value={col.unit}
                           onChange={(e) => {
                             setColumns((prev) =>
-                              prev.map((c, i) =>
-                                i === idx ? { ...c, unit: e.target.value } : c,
-                              ),
+                              prev.map((c, i) => (i === idx ? { ...c, unit: e.target.value } : c)),
                             );
                           }}
                           placeholder="単位"

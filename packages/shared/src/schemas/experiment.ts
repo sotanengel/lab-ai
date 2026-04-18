@@ -28,9 +28,13 @@ export const CreateExperimentRequestSchema = z.object({
   description: z.string().max(5000).nullable().optional(),
   tags: z.array(z.string().min(1).max(50)).default([]),
   sourceFormat: SourceFormatSchema,
-  columns: z.array(ColumnDefinitionSchema.omit({ id: true }).extend({
-    id: z.string().min(1).optional(),
-  })).min(1),
+  columns: z
+    .array(
+      ColumnDefinitionSchema.omit({ id: true }).extend({
+        id: z.string().min(1).optional(),
+      }),
+    )
+    .min(1),
   rows: z.array(z.record(z.string(), z.unknown())).default([]),
 });
 export type CreateExperimentRequest = z.infer<typeof CreateExperimentRequestSchema>;

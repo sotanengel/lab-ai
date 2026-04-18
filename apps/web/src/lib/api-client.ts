@@ -23,7 +23,10 @@ function resolveBaseUrl(): string {
 }
 
 export class ApiError extends Error {
-  constructor(message: string, public readonly status: number) {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
     super(message);
     this.name = "ApiError";
   }
@@ -63,9 +66,7 @@ export async function fetchExperiments(options?: {
   if (options?.limit !== undefined) params.set("limit", String(options.limit));
   if (options?.offset !== undefined) params.set("offset", String(options.offset));
   const qs = params.toString();
-  return request<ListExperimentsResponse>(
-    `/api/experiments${qs ? `?${qs}` : ""}`,
-  );
+  return request<ListExperimentsResponse>(`/api/experiments${qs ? `?${qs}` : ""}`);
 }
 
 export async function fetchExperiment(id: string): Promise<ExperimentDetail> {
@@ -86,14 +87,10 @@ export async function fetchExperimentRows(
   if (options?.limit !== undefined) params.set("limit", String(options.limit));
   if (options?.offset !== undefined) params.set("offset", String(options.offset));
   const qs = params.toString();
-  return request<ListRowsResponse>(
-    `/api/experiments/${id}/rows${qs ? `?${qs}` : ""}`,
-  );
+  return request<ListRowsResponse>(`/api/experiments/${id}/rows${qs ? `?${qs}` : ""}`);
 }
 
-export async function fetchExperimentStats(
-  id: string,
-): Promise<{ stats: ExperimentStats[] }> {
+export async function fetchExperimentStats(id: string): Promise<{ stats: ExperimentStats[] }> {
   return request<{ stats: ExperimentStats[] }>(`/api/experiments/${id}/stats`);
 }
 
@@ -108,16 +105,14 @@ export async function previewImport(input: {
   text: string;
   maxRows?: number;
 }): Promise<PreviewResponse> {
-  return request<PreviewResponse>(`/api/experiments/preview`, {
+  return request<PreviewResponse>("/api/experiments/preview", {
     method: "POST",
     body: JSON.stringify({ maxRows: 50, ...input }),
   });
 }
 
-export async function createExperiment(
-  input: CreateExperimentRequest,
-): Promise<ExperimentDetail> {
-  return request<ExperimentDetail>(`/api/experiments`, {
+export async function createExperiment(input: CreateExperimentRequest): Promise<ExperimentDetail> {
+  return request<ExperimentDetail>("/api/experiments", {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -162,7 +157,7 @@ export async function fetchContextDocuments(query?: string): Promise<ListContext
 export async function createContextDocument(
   input: CreateContextDocumentRequest,
 ): Promise<ContextDocument> {
-  return request<ContextDocument>(`/api/context-documents`, {
+  return request<ContextDocument>("/api/context-documents", {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -172,10 +167,8 @@ export async function deleteContextDocument(id: string): Promise<void> {
   await request<void>(`/api/context-documents/${id}`, { method: "DELETE" });
 }
 
-export async function createAdviceNote(
-  input: CreateAdviceNoteRequest,
-): Promise<AdviceNote> {
-  return request<AdviceNote>(`/api/advice-notes`, {
+export async function createAdviceNote(input: CreateAdviceNoteRequest): Promise<AdviceNote> {
+  return request<AdviceNote>("/api/advice-notes", {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -187,5 +180,5 @@ export async function fetchAdviceNotes(experimentId?: string): Promise<{ items: 
 }
 
 export async function fetchHealth(): Promise<{ status: string }> {
-  return request<{ status: string }>(`/health`);
+  return request<{ status: string }>("/health");
 }

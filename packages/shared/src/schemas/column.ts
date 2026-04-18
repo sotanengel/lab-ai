@@ -1,6 +1,13 @@
 import { z } from "zod";
 
-export const ColumnTypeSchema = z.enum(["number", "integer", "datetime", "category", "string", "boolean"]);
+export const ColumnTypeSchema = z.enum([
+  "number",
+  "integer",
+  "datetime",
+  "category",
+  "string",
+  "boolean",
+]);
 export type ColumnType = z.infer<typeof ColumnTypeSchema>;
 
 export const ColumnDefinitionSchema = z.object({

@@ -1,13 +1,13 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ExperimentActions } from "./ExperimentActions";
-import { StatsTable } from "./StatsTable";
 import {
   ApiError,
   fetchExperiment,
   fetchExperimentRows,
   fetchExperimentStats,
 } from "@/lib/api-client";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ExperimentActions } from "./ExperimentActions";
+import { StatsTable } from "./StatsTable";
 
 export const dynamic = "force-dynamic";
 
@@ -37,9 +37,7 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
             </div>
             <h1 className="mt-1 text-3xl font-bold">{detail.name}</h1>
             {detail.description && (
-              <p className="mt-2 text-sm opacity-80 whitespace-pre-wrap">
-                {detail.description}
-              </p>
+              <p className="mt-2 text-sm opacity-80 whitespace-pre-wrap">{detail.description}</p>
             )}
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs opacity-80">
               <span>{detail.sourceFormat.toUpperCase()}</span>
@@ -119,10 +117,7 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
                 {rowsRes.items.map((row, idx) => (
                   <tr key={idx} className="border-t border-white/5">
                     {detail.columns.map((col) => (
-                      <td
-                        key={col.id}
-                        className="whitespace-nowrap px-3 py-1.5 opacity-85"
-                      >
+                      <td key={col.id} className="whitespace-nowrap px-3 py-1.5 opacity-85">
                         {formatCellValue(row[col.name])}
                       </td>
                     ))}

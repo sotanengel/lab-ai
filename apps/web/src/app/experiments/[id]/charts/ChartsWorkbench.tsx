@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  buildHistogram,
+  extractNumericSeries,
+  isNumericColumn,
+  toNumberOrNull,
+} from "@/lib/chart-utils";
 import type { ColumnDefinition, ExperimentDetail, ExperimentRow } from "@lab-ai/shared";
 import { useMemo, useRef, useState } from "react";
 import {
@@ -17,12 +23,6 @@ import {
   YAxis,
   ZAxis,
 } from "recharts";
-import {
-  buildHistogram,
-  extractNumericSeries,
-  isNumericColumn,
-  toNumberOrNull,
-} from "@/lib/chart-utils";
 
 type ChartKind = "line" | "scatter" | "bar" | "histogram";
 
@@ -49,18 +49,16 @@ export function ChartsWorkbench({ detail, rows }: Props) {
   const [binCount, setBinCount] = useState<number>(20);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const numericColumns = useMemo(
-    () => detail.columns.filter(isNumericColumn),
-    [detail.columns],
-  );
+  const numericColumns = useMemo(() => detail.columns.filter(isNumericColumn), [detail.columns]);
 
   const toggleY = (name: string) => {
-    setYColumns((prev) =>
-      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
-    );
+    setYColumns((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
   };
 
-  const chartData = useMemo(() => prepareChartData(rows, xColumn, yColumns), [rows, xColumn, yColumns]);
+  const chartData = useMemo(
+    () => prepareChartData(rows, xColumn, yColumns),
+    [rows, xColumn, yColumns],
+  );
   const histogramSource = yColumns[0] ?? xColumn;
   const histogramData = useMemo(
     () => buildHistogram(extractNumericSeries(rows, histogramSource), binCount),
@@ -158,9 +156,7 @@ export function ChartsWorkbench({ detail, rows }: Props) {
                       }
                     }}
                     className={`rounded-md px-2 py-1 text-xs ${
-                      active
-                        ? "bg-[var(--accent)] text-white"
-                        : "bg-white/10 hover:bg-white/15"
+                      active ? "bg-[var(--accent)] text-white" : "bg-white/10 hover:bg-white/15"
                     }`}
                   >
                     {col.name}
@@ -173,9 +169,7 @@ export function ChartsWorkbench({ detail, rows }: Props) {
 
         {chartKind === "bar" && (
           <div>
-            <label className="block text-xs uppercase opacity-70 mb-1">
-              カテゴリ列（任意）
-            </label>
+            <label className="block text-xs uppercase opacity-70 mb-1">カテゴリ列（任意）</label>
             <select
               value={categoryColumn}
               onChange={(e) => setCategoryColumn(e.target.value)}
@@ -195,9 +189,7 @@ export function ChartsWorkbench({ detail, rows }: Props) {
 
         {chartKind === "histogram" && (
           <div>
-            <label className="block text-xs uppercase opacity-70 mb-1">
-              ビン数: {binCount}
-            </label>
+            <label className="block text-xs uppercase opacity-70 mb-1">ビン数: {binCount}</label>
             <input
               type="range"
               min={4}
@@ -321,9 +313,7 @@ function buildBarData(
   const categorySet = new Set<string>();
 
   for (const row of rows) {
-    const xKey = row[xColumn] === null || row[xColumn] === undefined
-      ? ""
-      : String(row[xColumn]);
+    const xKey = row[xColumn] === null || row[xColumn] === undefined ? "" : String(row[xColumn]);
     const catKey = categoryColumn
       ? row[categoryColumn] === null || row[categoryColumn] === undefined
         ? ""
@@ -369,7 +359,12 @@ function LineChartView({
     <ResponsiveContainer width="100%" height={480}>
       <LineChart data={data} margin={{ top: 12, right: 30, left: 0, bottom: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-        <XAxis dataKey="x" stroke="#cbd5f5" tick={{ fontSize: 12 }} label={{ value: xColumn, position: "insideBottom", offset: -10, fill: "#cbd5f5" }} />
+        <XAxis
+          dataKey="x"
+          stroke="#cbd5f5"
+          tick={{ fontSize: 12 }}
+          label={{ value: xColumn, position: "insideBottom", offset: -10, fill: "#cbd5f5" }}
+        />
         <YAxis stroke="#cbd5f5" tick={{ fontSize: 12 }} />
         <Tooltip contentStyle={{ background: "#0b1220", border: "1px solid #334155" }} />
         <Legend />
@@ -406,7 +401,10 @@ function ScatterChartView({
         <XAxis dataKey="x" stroke="#cbd5f5" tick={{ fontSize: 12 }} name={xColumn} />
         <YAxis stroke="#cbd5f5" tick={{ fontSize: 12 }} />
         <ZAxis range={[30, 30]} />
-        <Tooltip contentStyle={{ background: "#0b1220", border: "1px solid #334155" }} cursor={{ strokeDasharray: "3 3" }} />
+        <Tooltip
+          contentStyle={{ background: "#0b1220", border: "1px solid #334155" }}
+          cursor={{ strokeDasharray: "3 3" }}
+        />
         <Legend />
         {yColumns.map((y, i) => (
           <Scatter
@@ -443,7 +441,12 @@ function BarChartView({
     <ResponsiveContainer width="100%" height={480}>
       <BarChart data={data} margin={{ top: 12, right: 30, left: 0, bottom: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-        <XAxis dataKey="x" stroke="#cbd5f5" tick={{ fontSize: 12 }} label={{ value: xColumn, position: "insideBottom", offset: -10, fill: "#cbd5f5" }} />
+        <XAxis
+          dataKey="x"
+          stroke="#cbd5f5"
+          tick={{ fontSize: 12 }}
+          label={{ value: xColumn, position: "insideBottom", offset: -10, fill: "#cbd5f5" }}
+        />
         <YAxis stroke="#cbd5f5" tick={{ fontSize: 12 }} />
         <Tooltip contentStyle={{ background: "#0b1220", border: "1px solid #334155" }} />
         <Legend />
@@ -474,7 +477,12 @@ function HistogramView({
     <ResponsiveContainer width="100%" height={480}>
       <BarChart data={bins} margin={{ top: 12, right: 30, left: 0, bottom: 20 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-        <XAxis dataKey="label" stroke="#cbd5f5" tick={{ fontSize: 10 }} interval={Math.max(0, Math.floor(bins.length / 10))} />
+        <XAxis
+          dataKey="label"
+          stroke="#cbd5f5"
+          tick={{ fontSize: 10 }}
+          interval={Math.max(0, Math.floor(bins.length / 10))}
+        />
         <YAxis stroke="#cbd5f5" tick={{ fontSize: 12 }} />
         <Tooltip contentStyle={{ background: "#0b1220", border: "1px solid #334155" }} />
         <Bar dataKey="count" fill={SERIES_COLORS[0]} name={columnName} isAnimationActive={false} />
@@ -485,9 +493,7 @@ function HistogramView({
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex h-[480px] items-center justify-center text-sm opacity-70">
-      {message}
-    </div>
+    <div className="flex h-[480px] items-center justify-center text-sm opacity-70">{message}</div>
   );
 }
 

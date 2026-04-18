@@ -1,9 +1,6 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { toolDescriptors } from "./tools.js";
 
 const server = new Server(
@@ -48,12 +45,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  // biome-ignore lint/suspicious/noConsoleLog: MCP servers log to stderr
   console.error("lab-ai MCP server running on stdio");
 }
 
 main().catch((err) => {
-  // biome-ignore lint/suspicious/noConsoleLog: fatal error path
   console.error("Fatal MCP server error:", err);
   process.exit(1);
 });

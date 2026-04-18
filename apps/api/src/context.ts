@@ -1,4 +1,4 @@
-import { createDb, type Database } from "@lab-ai/db";
+import { type Database, createDb } from "@lab-ai/db";
 
 export interface AppEnv {
   Variables: {

@@ -1,14 +1,13 @@
-import type { Metadata, Viewport } from "next";
-import type { ReactNode } from "react";
 import { Header } from "@/components/Header";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import type { Metadata, Viewport } from "next";
+import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Lab AI — Experiment Analysis Platform",
-  description:
-    "Import, visualize, and analyze research experiment data with AI-powered advice.",
+  description: "Import, visualize, and analyze research experiment data with AI-powered advice.",
   manifest: "/manifest.webmanifest",
 };
 

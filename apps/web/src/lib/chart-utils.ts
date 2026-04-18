@@ -1,9 +1,6 @@
 import type { ColumnDefinition, ExperimentRow } from "@lab-ai/shared";
 
-export const NUMERIC_TYPES: ReadonlySet<ColumnDefinition["type"]> = new Set([
-  "number",
-  "integer",
-]);
+export const NUMERIC_TYPES: ReadonlySet<ColumnDefinition["type"]> = new Set(["number", "integer"]);
 
 export function isNumericColumn(col: ColumnDefinition): boolean {
   return NUMERIC_TYPES.has(col.type);
@@ -85,10 +82,7 @@ export function computeBoxStats(values: readonly number[]): BoxStats | null {
   return { min, q1, median, q3, max, outliers };
 }
 
-export function extractNumericSeries(
-  rows: readonly ExperimentRow[],
-  columnName: string,
-): number[] {
+export function extractNumericSeries(rows: readonly ExperimentRow[], columnName: string): number[] {
   const out: number[] = [];
   for (const row of rows) {
     const n = toNumberOrNull(row[columnName]);

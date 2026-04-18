@@ -4,9 +4,7 @@ test.describe("Lab AI smoke flow", () => {
   test("home page lists experiments and has a skip link", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "メインコンテンツへスキップ" }),
-    ).toBeAttached();
+    await expect(page.getByRole("link", { name: "メインコンテンツへスキップ" })).toBeAttached();
   });
 
   test("navigation exposes import and context links", async ({ page }) => {

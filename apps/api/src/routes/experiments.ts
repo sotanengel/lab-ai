@@ -75,18 +75,14 @@ export const experimentsRouter = new Hono<AppEnv>()
     if (!archived) throw new NotFoundError("Experiment");
     return c.body(null, 204);
   })
-  .get(
-    "/:id/rows",
-    zValidator("query", PaginationQuerySchema),
-    (c) => {
-      const db = c.get("db");
-      const id = c.req.param("id");
-      if (!getExperimentDetail(db, id)) throw new NotFoundError("Experiment");
-      const { limit, offset } = c.req.valid("query");
-      const rows = getExperimentRows(db, id, { limit, offset });
-      return c.json({ items: rows, limit, offset });
-    },
-  )
+  .get("/:id/rows", zValidator("query", PaginationQuerySchema), (c) => {
+    const db = c.get("db");
+    const id = c.req.param("id");
+    if (!getExperimentDetail(db, id)) throw new NotFoundError("Experiment");
+    const { limit, offset } = c.req.valid("query");
+    const rows = getExperimentRows(db, id, { limit, offset });
+    return c.json({ items: rows, limit, offset });
+  })
   .get("/:id/stats", (c) => {
     const db = c.get("db");
     const id = c.req.param("id");
@@ -98,10 +94,7 @@ export const experimentsRouter = new Hono<AppEnv>()
   })
   .get(
     "/:id/export",
-    zValidator(
-      "query",
-      z.object({ format: z.enum(["csv", "json"]).default("csv") }),
-    ),
+    zValidator("query", z.object({ format: z.enum(["csv", "json"]).default("csv") })),
     (c) => {
       const db = c.get("db");
       const id = c.req.param("id");

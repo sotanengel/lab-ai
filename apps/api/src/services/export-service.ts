@@ -14,9 +14,7 @@ export function exportAsCsv(
   rows: readonly ExperimentRow[],
 ): string {
   const header = columns.map((c) => escapeCsv(c.name)).join(",");
-  const body = rows
-    .map((row) => columns.map((c) => escapeCsv(row[c.name])).join(","))
-    .join("\n");
+  const body = rows.map((row) => columns.map((c) => escapeCsv(row[c.name])).join(",")).join("\n");
   return `${header}\n${body}\n`;
 }
 

@@ -15,7 +15,10 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-function toMeta(row: typeof schema.experiments.$inferSelect, tagNames: readonly string[]): ExperimentMeta {
+function toMeta(
+  row: typeof schema.experiments.$inferSelect,
+  tagNames: readonly string[],
+): ExperimentMeta {
   return {
     id: row.id,
     name: row.name,
@@ -166,7 +169,9 @@ export function createExperiment(db: Database, input: CreateExperimentRequest): 
       // insert in chunks to stay under SQLite variable limit
       const chunkSize = 200;
       for (let i = 0; i < rowValues.length; i += chunkSize) {
-        tx.insert(schema.experimentRows).values(rowValues.slice(i, i + chunkSize)).run();
+        tx.insert(schema.experimentRows)
+          .values(rowValues.slice(i, i + chunkSize))
+          .run();
       }
     }
 

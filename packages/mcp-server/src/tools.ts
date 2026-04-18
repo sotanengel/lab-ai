@@ -50,7 +50,8 @@ export const toolDescriptors: ToolDescriptor[] = [
   },
   {
     name: "get_experiment_data",
-    description: "Return the statistical summary plus the first N rows of the specified experiment.",
+    description:
+      "Return the statistical summary plus the first N rows of the specified experiment.",
     inputSchema: {
       type: "object",
       properties: {
