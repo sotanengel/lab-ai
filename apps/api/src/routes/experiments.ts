@@ -17,6 +17,7 @@ import {
   listExperiments,
   updateExperiment,
 } from "../repositories/experiment-repository.js";
+import { exportAsCsv, exportAsJson } from "../services/export-service.js";
 import { parseInputText } from "../services/parse-service.js";
 import { computeColumnStats } from "../services/stats-service.js";
 
@@ -94,4 +95,28 @@ export const experimentsRouter = new Hono<AppEnv>()
     const rows = getExperimentRows(db, id, { limit: 10_000, offset: 0 });
     const stats = computeColumnStats(detail.columns, rows);
     return c.json({ stats });
-  });
+  })
+  .get(
+    "/:id/export",
+    zValidator(
+      "query",
+      z.object({ format: z.enum(["csv", "json"]).default("csv") }),
+    ),
+    (c) => {
+      const db = c.get("db");
+      const id = c.req.param("id");
+      const detail = getExperimentDetail(db, id);
+      if (!detail) throw new NotFoundError("Experiment");
+      const rows = getExperimentRows(db, id, { limit: 1_000_000, offset: 0 });
+      const { format } = c.req.valid("query");
+      const safeName = detail.name.replace(/[^A-Za-z0-9_.-]+/g, "_");
+      if (format === "json") {
+        c.header("content-type", "application/json; charset=utf-8");
+        c.header("content-disposition", `attachment; filename="${safeName}.json"`);
+        return c.body(exportAsJson(detail, rows));
+      }
+      c.header("content-type", "text/csv; charset=utf-8");
+      c.header("content-disposition", `attachment; filename="${safeName}.csv"`);
+      return c.body(exportAsCsv(detail.columns, rows));
+    },
+  );

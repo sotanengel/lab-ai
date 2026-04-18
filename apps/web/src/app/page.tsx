@@ -13,58 +13,86 @@ export default async function HomePage() {
   }
 
   return (
-    <main className="px-8 py-12 max-w-5xl mx-auto w-full">
-      <header className="mb-10">
-        <h1 className="text-3xl font-bold">Lab AI</h1>
-        <p className="text-sm opacity-80 mt-2">
-          研究実験結果を取込・可視化し、AI からアドバイスを受け取るプラットフォーム
-        </p>
+    <div className="px-6 py-10 max-w-6xl mx-auto w-full">
+      <header className="mb-8 flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-3xl font-bold">実験セット一覧</h1>
+          <p className="text-sm opacity-80 mt-1">
+            取込済みの実験を管理し、可視化・AI アドバイスへ進みます。
+          </p>
+        </div>
+        <Link
+          href="/experiments/new"
+          className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+        >
+          + 新規取込
+        </Link>
       </header>
 
-      <section className="rounded-lg border border-white/10 bg-white/5 p-6">
-        <h2 className="text-xl font-semibold mb-4">実験セット一覧</h2>
-        {errorMessage ? (
-          <p className="text-sm text-red-300">
-            API への接続に失敗しました: {errorMessage}
-          </p>
-        ) : experiments && experiments.items.length > 0 ? (
-          <ul className="space-y-2">
-            {experiments.items.map((exp) => (
-              <li
-                key={exp.id}
-                className="flex items-center justify-between rounded-md bg-white/5 px-4 py-3"
-              >
-                <div>
-                  <div className="font-medium">{exp.name}</div>
-                  <div className="text-xs opacity-70">
-                    {exp.rowCount} 行 · {new Date(exp.createdAt).toLocaleString("ja-JP")}
-                  </div>
+      {errorMessage ? (
+        <p className="rounded-md border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
+          API への接続に失敗しました: {errorMessage}
+        </p>
+      ) : experiments && experiments.items.length > 0 ? (
+        <ul className="space-y-2">
+          {experiments.items.map((exp) => (
+            <li
+              key={exp.id}
+              className="flex items-center justify-between gap-4 rounded-md border border-white/10 bg-white/5 px-4 py-3"
+            >
+              <div className="min-w-0">
+                <div className="font-medium truncate">{exp.name}</div>
+                <div className="text-xs opacity-70 mt-1 flex flex-wrap gap-2">
+                  <span>{exp.rowCount.toLocaleString()} 行</span>
+                  <span>·</span>
+                  <span>{exp.sourceFormat.toUpperCase()}</span>
+                  <span>·</span>
+                  <span>{new Date(exp.createdAt).toLocaleString("ja-JP")}</span>
+                  {exp.tags.length > 0 && (
+                    <>
+                      <span>·</span>
+                      <span className="flex gap-1 flex-wrap">
+                        {exp.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-sm bg-white/10 px-1.5 py-0.5 text-[10px]"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </span>
+                    </>
+                  )}
                 </div>
+              </div>
+              <div className="flex items-center gap-3 text-sm">
                 <Link
                   href={`/experiments/${exp.id}`}
-                  className="text-sm text-[var(--accent)] underline"
+                  className="text-[var(--accent)] underline whitespace-nowrap"
                 >
                   詳細
                 </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm opacity-70">
-            まだ実験セットがありません。CSV / TSV / JSON ファイルから取り込みを開始してください。
-          </p>
-        )}
-      </section>
-
-      <section className="mt-10 rounded-lg border border-white/10 bg-white/5 p-6">
-        <h2 className="text-xl font-semibold mb-4">Phase 1 スコープ</h2>
-        <ul className="list-disc list-inside space-y-1 text-sm opacity-85">
-          <li>Monorepo（pnpm workspace）とコンテナ起動（docker compose up）</li>
-          <li>SQLite + Drizzle ORM による実験データ永続化</li>
-          <li>Hono + Zod による型安全 REST API</li>
-          <li>Takumi Guard（CI + ローカル .npmrc）によるサプライチェーン保護</li>
+                <Link
+                  href={`/experiments/${exp.id}/charts`}
+                  className="text-[var(--accent)] underline whitespace-nowrap"
+                >
+                  グラフ
+                </Link>
+              </div>
+            </li>
+          ))}
         </ul>
-      </section>
-    </main>
+      ) : (
+        <div className="rounded-md border border-dashed border-white/15 p-8 text-center opacity-80">
+          <p>まだ実験セットがありません。</p>
+          <Link
+            href="/experiments/new"
+            className="mt-4 inline-block text-[var(--accent)] underline"
+          >
+            最初の実験を取り込む →
+          </Link>
+        </div>
+      )}
+    </div>
   );
 }
