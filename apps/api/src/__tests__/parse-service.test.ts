@@ -31,4 +31,21 @@ describe("parseInputText", () => {
   it("throws on invalid JSON shape", () => {
     expect(() => parseInputText('{"not": "array"}', "json")).toThrow();
   });
+
+  it("auto-detects the delimiter for txt", () => {
+    const text = "a;b;c\n1;2;3";
+    const result = parseInputText(text, "txt");
+    expect(result.columns.map((c) => c.name)).toEqual(["a", "b", "c"]);
+    expect(result.rows[0]).toEqual({ a: "1", b: "2", c: "3" });
+  });
+
+  it("honors quoted fields containing the delimiter", () => {
+    const text = 'a,b\n"hello, world","x"';
+    const result = parseInputText(text, "csv");
+    expect(result.rows[0]).toEqual({ a: "hello, world", b: "x" });
+  });
+
+  it("returns empty results for an empty input", () => {
+    expect(parseInputText("", "csv")).toEqual({ columns: [], rows: [] });
+  });
 });

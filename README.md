@@ -101,10 +101,12 @@ pnpm --filter @lab-ai/web dev # start Next.js at :3000
 | `pnpm run lint`       | Biome lint + format check                |
 | `pnpm run typecheck`  | TypeScript `--noEmit` across workspace   |
 | `pnpm run test`       | Vitest unit tests across workspace       |
+| `pnpm run coverage`   | API service coverage (NF-09: ≥ 70% lines/statements/functions) |
 | `pnpm run build`      | Build all packages and apps              |
 | `pnpm run db:generate`| Generate Drizzle migrations from schema  |
 | `pnpm run db:migrate` | Apply migrations to `$DATABASE_URL`      |
-| `pnpm run e2e`        | Playwright smoke tests                   |
+| `pnpm run e2e`        | Playwright smoke tests (includes axe-core a11y scan — NF-07) |
+| `pnpm run perf:check` | NF-03/04 smoke: `/health` in ≤30s and 10k-row rows fetch in ≤2s |
 
 ## Pre-commit hooks
 

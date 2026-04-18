@@ -31,7 +31,22 @@ export function AdviceChat({ experiment }: Props) {
   const [messages, setMessages] = useState<StoredMessage[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [online, setOnline] = useState<boolean>(() =>
+    typeof navigator === "undefined" ? true : navigator.onLine,
+  );
   const controllerRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sync = () => setOnline(navigator.onLine);
+    sync();
+    window.addEventListener("online", sync);
+    window.addEventListener("offline", sync);
+    return () => {
+      window.removeEventListener("online", sync);
+      window.removeEventListener("offline", sync);
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -266,6 +281,12 @@ export function AdviceChat({ experiment }: Props) {
         )}
       </div>
 
+      {!online && (
+        <p className="rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-xs text-amber-100">
+          オフラインのため AI 機能は一時的に無効です。接続が復帰すると自動的に有効化されます。
+        </p>
+      )}
+
       {error && (
         <p className="rounded-md border border-red-500/40 bg-red-500/10 p-2 text-xs text-red-200">
           {error}
@@ -279,16 +300,19 @@ export function AdviceChat({ experiment }: Props) {
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
               e.preventDefault();
-              void send();
+              if (online) void send();
             }
           }}
-          placeholder="例: この時系列データから読み取れる傾向は？"
-          className="min-h-[72px] flex-1 rounded-md bg-black/30 px-3 py-2 text-sm"
+          placeholder={
+            online ? "例: この時系列データから読み取れる傾向は？" : "オフライン中は送信できません"
+          }
+          disabled={!online}
+          className="min-h-[72px] flex-1 rounded-md bg-black/30 px-3 py-2 text-sm disabled:opacity-50"
         />
         <button
           type="button"
           onClick={send}
-          disabled={busy || !input.trim()}
+          disabled={busy || !input.trim() || !online}
           className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
         >
           {busy ? "送信中..." : "送信"}
