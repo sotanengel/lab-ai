@@ -4,6 +4,7 @@ import { secureHeaders } from "hono/secure-headers";
 import type { AppEnv } from "./context.js";
 import { getDb } from "./context.js";
 import { handleError } from "./errors.js";
+import { adviceRouter } from "./routes/advice.js";
 import { adviceNotesRouter } from "./routes/advice-notes.js";
 import { contextDocumentsRouter } from "./routes/context-documents.js";
 import { experimentsRouter } from "./routes/experiments.js";
@@ -32,6 +33,7 @@ export function createApp() {
   app.route("/api/experiments", experimentsRouter);
   app.route("/api/context-documents", contextDocumentsRouter);
   app.route("/api/advice-notes", adviceNotesRouter);
+  app.route("/api/advice", adviceRouter);
 
   app.onError(handleError);
   app.notFound((c) =>

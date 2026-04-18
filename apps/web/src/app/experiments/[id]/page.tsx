@@ -4,6 +4,7 @@ import { ExperimentActions } from "./ExperimentActions";
 import { StatsTable } from "./StatsTable";
 import {
   ApiError,
+  fetchAdviceNotes,
   fetchExperiment,
   fetchExperimentRows,
   fetchExperimentStats,
@@ -18,10 +19,11 @@ interface PageProps {
 export default async function ExperimentDetailPage({ params }: PageProps) {
   const { id } = await params;
   try {
-    const [detail, rowsRes, statsRes] = await Promise.all([
+    const [detail, rowsRes, statsRes, notesRes] = await Promise.all([
       fetchExperiment(id),
       fetchExperimentRows(id, { limit: 100, offset: 0 }),
       fetchExperimentStats(id),
+      fetchAdviceNotes(id),
     ]);
 
     return (
@@ -99,6 +101,28 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
           <h2 className="text-lg font-semibold mb-3">統計サマリ</h2>
           <StatsTable stats={statsRes.stats} />
         </section>
+
+        {notesRes.items.length > 0 && (
+          <section className="rounded-md border border-white/10 bg-white/5 p-5">
+            <h2 className="text-lg font-semibold mb-3">AI アドバイスノート</h2>
+            <ul className="space-y-3">
+              {notesRes.items.map((note) => (
+                <li
+                  key={note.id}
+                  className="rounded-md border border-white/10 bg-white/5 p-3"
+                >
+                  <div className="text-xs opacity-70">
+                    {new Date(note.createdAt).toLocaleString("ja-JP")}
+                  </div>
+                  <div className="mt-1 font-medium">{note.title}</div>
+                  <pre className="mt-2 whitespace-pre-wrap font-sans text-sm opacity-85">
+                    {note.body}
+                  </pre>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="rounded-md border border-white/10 bg-white/5 p-5">
           <div className="mb-3 flex items-baseline justify-between">

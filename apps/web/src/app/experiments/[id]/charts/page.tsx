@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChartsWorkbench } from "./ChartsWorkbench";
+import { AdviceChat } from "@/components/AdviceChat";
 import {
   ApiError,
   fetchExperiment,
@@ -46,6 +47,8 @@ export default async function ExperimentChartsPage({ params }: PageProps) {
         </header>
 
         <ChartsWorkbench detail={detail} rows={rowsRes.items} />
+
+        <AdviceChat experiment={{ id: detail.id, name: detail.name }} />
       </div>
     );
   } catch (err) {
