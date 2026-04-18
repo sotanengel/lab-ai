@@ -7,6 +7,7 @@ import { handleError } from "./errors.js";
 import { adviceNotesRouter } from "./routes/advice-notes.js";
 import { adviceRouter } from "./routes/advice.js";
 import { contextDocumentsRouter } from "./routes/context-documents.js";
+import { experimentNotesRouter } from "./routes/experiment-notes.js";
 import { experimentsRouter } from "./routes/experiments.js";
 
 export function createApp() {
@@ -31,6 +32,7 @@ export function createApp() {
   app.get("/health", (c) => c.json({ status: "ok", service: "lab-ai-api" }));
 
   app.route("/api/experiments", experimentsRouter);
+  app.route("/api/experiment-notes", experimentNotesRouter);
   app.route("/api/context-documents", contextDocumentsRouter);
   app.route("/api/advice-notes", adviceNotesRouter);
   app.route("/api/advice", adviceRouter);

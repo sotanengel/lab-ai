@@ -76,6 +76,17 @@ export const adviceNotes = sqliteTable("advice_notes", {
   createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
 });
 
+export const experimentNotes = sqliteTable("experiment_notes", {
+  id: text("id").primaryKey(),
+  experimentId: text("experiment_id")
+    .notNull()
+    .references(() => experiments.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
+});
+
 export const experimentsRelations = relations(experiments, ({ many }) => ({
   columns: many(experimentColumns),
   rows: many(experimentRows),
@@ -111,6 +122,13 @@ export const experimentTagsRelations = relations(experimentTags, ({ one }) => ({
 export const adviceNotesRelations = relations(adviceNotes, ({ one }) => ({
   experiment: one(experiments, {
     fields: [adviceNotes.experimentId],
+    references: [experiments.id],
+  }),
+}));
+
+export const experimentNotesRelations = relations(experimentNotes, ({ one }) => ({
+  experiment: one(experiments, {
+    fields: [experimentNotes.experimentId],
     references: [experiments.id],
   }),
 }));

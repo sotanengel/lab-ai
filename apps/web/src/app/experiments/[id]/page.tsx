@@ -3,6 +3,7 @@ import {
   ApiError,
   fetchAdviceNotes,
   fetchExperiment,
+  fetchExperimentNotes,
   fetchExperimentRows,
   fetchExperimentStats,
 } from "@/lib/api-client";
@@ -10,6 +11,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExperimentActions } from "./ExperimentActions";
 import { IntegrityChecker } from "./IntegrityChecker";
+import { NotesPanel } from "./NotesPanel";
 import { StatsTable } from "./StatsTable";
 
 export const dynamic = "force-dynamic";
@@ -21,11 +23,12 @@ interface PageProps {
 export default async function ExperimentDetailPage({ params }: PageProps) {
   const { id } = await params;
   try {
-    const [detail, rowsRes, statsRes, notesRes] = await Promise.all([
+    const [detail, rowsRes, statsRes, notesRes, userNotesRes] = await Promise.all([
       fetchExperiment(id),
       fetchExperimentRows(id, { limit: 100, offset: 0 }),
       fetchExperimentStats(id),
       fetchAdviceNotes(id),
+      fetchExperimentNotes(id),
     ]);
 
     return (
@@ -115,6 +118,8 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
           registeredHash={detail.sourceHash}
           sourceFormat={detail.sourceFormat}
         />
+
+        <NotesPanel experimentId={detail.id} initialNotes={userNotesRes.items} />
 
         {notesRes.items.length > 0 && (
           <section className="rounded-md border border-white/10 bg-white/5 p-5">

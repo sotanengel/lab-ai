@@ -4,14 +4,17 @@ import type {
   ContextDocument,
   CreateAdviceNoteRequest,
   CreateContextDocumentRequest,
+  CreateExperimentNoteRequest,
   CreateExperimentRequest,
   ExperimentDetail,
   ExperimentMeta,
+  ExperimentNote,
   ExperimentRow,
   ExperimentStats,
   ImportSuggestionResponse,
   IntegrityCheckResponse,
   SourceFormat,
+  UpdateExperimentNoteRequest,
 } from "@lab-ai/shared";
 
 const FALLBACK_BASE_URL = "http://localhost:8787";
@@ -183,6 +186,36 @@ export async function fetchAdviceNotes(experimentId?: string): Promise<{ items: 
 
 export async function fetchHealth(): Promise<{ status: string }> {
   return request<{ status: string }>("/health");
+}
+
+export async function fetchExperimentNotes(
+  experimentId?: string,
+): Promise<{ items: ExperimentNote[] }> {
+  const qs = experimentId ? `?experimentId=${encodeURIComponent(experimentId)}` : "";
+  return request<{ items: ExperimentNote[] }>(`/api/experiment-notes${qs}`);
+}
+
+export async function createExperimentNote(
+  input: CreateExperimentNoteRequest,
+): Promise<ExperimentNote> {
+  return request<ExperimentNote>("/api/experiment-notes", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function updateExperimentNote(
+  id: string,
+  input: UpdateExperimentNoteRequest,
+): Promise<ExperimentNote> {
+  return request<ExperimentNote>(`/api/experiment-notes/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function deleteExperimentNote(id: string): Promise<void> {
+  await request<void>(`/api/experiment-notes/${id}`, { method: "DELETE" });
 }
 
 export interface VerifyFileInput {
