@@ -4,19 +4,16 @@ ENV PNPM_HOME="/pnpm" PATH="/pnpm:${PATH}" CI=1
 RUN corepack enable
 WORKDIR /app
 
-FROM base AS deps
-COPY pnpm-workspace.yaml pnpm-lock.yaml* package.json .npmrc* ./
-COPY packages/shared/package.json packages/shared/
-COPY packages/db/package.json packages/db/
-COPY apps/api/package.json apps/api/
-RUN --mount=type=cache,target=/pnpm/store pnpm fetch --prod=false
-
-FROM deps AS build
-COPY tsconfig.base.json ./
+FROM base AS build
+# Docker builds go through the public registry unless a Takumi bot token is
+# provided — the Takumi Guard proxy requires auth for scoped packages and
+# Docker builds don't carry the GitHub Actions OIDC context.
+ENV NPM_CONFIG_REGISTRY=https://registry.npmjs.org/
+COPY pnpm-workspace.yaml pnpm-lock.yaml* package.json tsconfig.base.json ./
 COPY packages/shared ./packages/shared
 COPY packages/db ./packages/db
 COPY apps/api ./apps/api
-RUN pnpm install --frozen-lockfile=false --offline
+RUN pnpm install --no-frozen-lockfile
 RUN pnpm --filter @lab-ai/shared build \
  && pnpm --filter @lab-ai/db build \
  && pnpm --filter @lab-ai/api build
