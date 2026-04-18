@@ -168,6 +168,34 @@ export async function createContextDocument(
   });
 }
 
+export async function createContextDocumentFromPdf(
+  file: File,
+  title?: string,
+): Promise<ContextDocument & { pageCount?: number }> {
+  const form = new FormData();
+  form.set("file", file);
+  if (title) form.set("title", title);
+  const res = await fetch(`${resolveBaseUrl()}/api/context-documents/from-pdf`, {
+    method: "POST",
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new ApiError(body || `PDF upload failed ${res.status}`, res.status);
+  }
+  return (await res.json()) as ContextDocument & { pageCount?: number };
+}
+
+export async function createContextDocumentFromUrl(
+  url: string,
+  title?: string,
+): Promise<ContextDocument> {
+  return request<ContextDocument>("/api/context-documents/from-url", {
+    method: "POST",
+    body: JSON.stringify(title ? { url, title } : { url }),
+  });
+}
+
 export async function deleteContextDocument(id: string): Promise<void> {
   await request<void>(`/api/context-documents/${id}`, { method: "DELETE" });
 }
