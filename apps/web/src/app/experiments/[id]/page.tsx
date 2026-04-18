@@ -7,6 +7,7 @@ import {
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExperimentActions } from "./ExperimentActions";
+import { IntegrityChecker } from "./IntegrityChecker";
 import { StatsTable } from "./StatsTable";
 
 export const dynamic = "force-dynamic";
@@ -46,7 +47,15 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
               <span>·</span>
               <span>{detail.columns.length} カラム</span>
               <span>·</span>
-              <span>作成 {new Date(detail.createdAt).toLocaleString("ja-JP")}</span>
+              <span>登録日 {new Date(detail.registeredAt).toLocaleString("ja-JP")}</span>
+              {detail.sourceFilename && (
+                <>
+                  <span>·</span>
+                  <span>
+                    元ファイル <span className="font-mono">{detail.sourceFilename}</span>
+                  </span>
+                </>
+              )}
             </div>
             {detail.tags.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -97,6 +106,12 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
           <h2 className="text-lg font-semibold mb-3">統計サマリ</h2>
           <StatsTable stats={statsRes.stats} />
         </section>
+
+        <IntegrityChecker
+          experimentId={detail.id}
+          registeredHash={detail.sourceHash}
+          sourceFormat={detail.sourceFormat}
+        />
 
         <section className="rounded-md border border-white/10 bg-white/5 p-5">
           <div className="mb-3 flex items-baseline justify-between">

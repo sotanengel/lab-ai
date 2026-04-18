@@ -11,6 +11,7 @@ describe("ExperimentMetaSchema", () => {
       sourceFormat: "csv",
       rowCount: 10,
       archived: false,
+      registeredAt: "2026-04-18T00:00:00.000Z",
       createdAt: "2026-04-18T00:00:00.000Z",
       updatedAt: "2026-04-18T00:00:00.000Z",
     });
@@ -25,6 +26,7 @@ describe("ExperimentMetaSchema", () => {
       sourceFormat: "csv",
       rowCount: 0,
       archived: false,
+      registeredAt: "2026-04-18T00:00:00.000Z",
       createdAt: "2026-04-18T00:00:00.000Z",
       updatedAt: "2026-04-18T00:00:00.000Z",
     });

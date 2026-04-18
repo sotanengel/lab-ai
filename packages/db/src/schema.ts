@@ -6,8 +6,12 @@ export const experiments = sqliteTable("experiments", {
   name: text("name").notNull(),
   description: text("description"),
   sourceFormat: text("source_format").notNull(),
+  sourceFilename: text("source_filename"),
+  sourceHash: text("source_hash"),
+  sourceSize: integer("source_size"),
   rowCount: integer("row_count").notNull().default(0),
   archived: integer("archived", { mode: "boolean" }).notNull().default(false),
+  registeredAt: text("registered_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
   createdAt: text("created_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
   updatedAt: text("updated_at").notNull().default(sql`(CURRENT_TIMESTAMP)`),
 });
