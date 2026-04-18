@@ -3,6 +3,7 @@ import { type Database, createDb } from "@lab-ai/db";
 export interface AppEnv {
   Variables: {
     db: Database;
+    requestId: string;
   };
 }
 
