@@ -1,6 +1,11 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
+import {
+  CallToolRequestSchema,
+  type CallToolResult,
+  ListToolsRequestSchema,
+  type ListToolsResult,
+} from "@modelcontextprotocol/sdk/types.js";
 import { toolDescriptors } from "./tools.js";
 
 const server = new Server(
@@ -15,15 +20,18 @@ const server = new Server(
   },
 );
 
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: toolDescriptors.map(({ name, description, inputSchema }) => ({
-    name,
-    description,
-    inputSchema,
-  })),
-}));
+server.setRequestHandler(
+  ListToolsRequestSchema,
+  async (): Promise<ListToolsResult> => ({
+    tools: toolDescriptors.map(({ name, description, inputSchema }) => ({
+      name,
+      description,
+      inputSchema,
+    })),
+  }),
+);
 
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
+server.setRequestHandler(CallToolRequestSchema, async (request): Promise<CallToolResult> => {
   const descriptor = toolDescriptors.find((t) => t.name === request.params.name);
   if (!descriptor) {
     return {
@@ -32,7 +40,8 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     };
   }
   try {
-    return await descriptor.handler(request.params.arguments ?? {});
+    const result = await descriptor.handler(request.params.arguments ?? {});
+    return result as CallToolResult;
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return {

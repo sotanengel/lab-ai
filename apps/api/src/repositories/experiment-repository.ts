@@ -175,7 +175,7 @@ export function createExperiment(db: Database, input: CreateExperimentRequest): 
       }
     }
 
-    const tagIds = upsertTags(tx as Database, input.tags);
+    const tagIds = upsertTags(tx as unknown as Database, input.tags);
     if (tagIds.length > 0) {
       tx.insert(schema.experimentTags)
         .values(tagIds.map((tagId) => ({ experimentId: id, tagId })))
@@ -205,7 +205,7 @@ export function updateExperiment(
 
     if (input.tags) {
       tx.delete(schema.experimentTags).where(eq(schema.experimentTags.experimentId, id)).run();
-      const tagIds = upsertTags(tx as Database, input.tags);
+      const tagIds = upsertTags(tx as unknown as Database, input.tags);
       if (tagIds.length > 0) {
         tx.insert(schema.experimentTags)
           .values(tagIds.map((tagId) => ({ experimentId: id, tagId })))

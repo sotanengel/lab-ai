@@ -120,6 +120,6 @@ export function parseInputText(text: string, format: SourceFormat): ParseResult 
     case "txt":
       return parseDelimited(text);
     default:
-      throw new Error(`Unsupported source format: ${format satisfies never}`);
+      throw new Error(`Unsupported source format: ${String(format)}`);
   }
 }
