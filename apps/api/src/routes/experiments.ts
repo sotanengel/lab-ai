@@ -15,10 +15,13 @@ import {
   archiveExperiment,
   countExperiments,
   createExperiment,
+  deleteExperimentRow,
   getExperimentDetail,
   getExperimentRows,
+  getExperimentRowsWithIds,
   listExperiments,
   updateExperiment,
+  updateExperimentRow,
 } from "../repositories/experiment-repository.js";
 import { exportAsCsv, exportAsJson, exportAsXlsx } from "../services/export-service.js";
 import { sha256Hex } from "../services/hash-service.js";
@@ -109,6 +112,35 @@ export const experimentsRouter = new Hono<AppEnv>()
     const { limit, offset } = c.req.valid("query");
     const rows = getExperimentRows(db, id, { limit, offset });
     return c.json({ items: rows, limit, offset });
+  })
+  .get("/:id/rows-full", zValidator("query", PaginationQuerySchema), (c) => {
+    const db = c.get("db");
+    const id = c.req.param("id");
+    if (!getExperimentDetail(db, id)) throw new NotFoundError("Experiment");
+    const { limit, offset } = c.req.valid("query");
+    const rows = getExperimentRowsWithIds(db, id, { limit, offset });
+    return c.json({ items: rows, limit, offset });
+  })
+  .patch(
+    "/:id/rows/:rowId",
+    zValidator("json", z.object({ data: z.record(z.string(), z.unknown()) })),
+    (c) => {
+      const db = c.get("db");
+      const id = c.req.param("id");
+      const rowId = c.req.param("rowId");
+      const { data } = c.req.valid("json");
+      const updated = updateExperimentRow(db, id, rowId, data);
+      if (!updated) throw new NotFoundError("Row");
+      return c.json(updated);
+    },
+  )
+  .delete("/:id/rows/:rowId", (c) => {
+    const db = c.get("db");
+    const id = c.req.param("id");
+    const rowId = c.req.param("rowId");
+    const ok = deleteExperimentRow(db, id, rowId);
+    if (!ok) throw new NotFoundError("Row");
+    return c.body(null, 204);
   })
   .get("/:id/stats", (c) => {
     const db = c.get("db");

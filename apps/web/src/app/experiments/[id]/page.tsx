@@ -4,11 +4,12 @@ import {
   fetchAdviceNotes,
   fetchExperiment,
   fetchExperimentNotes,
-  fetchExperimentRows,
+  fetchExperimentRowsFull,
   fetchExperimentStats,
 } from "@/lib/api-client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { EditableRowsTable } from "./EditableRowsTable";
 import { ExperimentActions } from "./ExperimentActions";
 import { IntegrityChecker } from "./IntegrityChecker";
 import { NotesPanel } from "./NotesPanel";
@@ -25,7 +26,7 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
   try {
     const [detail, rowsRes, statsRes, notesRes, userNotesRes] = await Promise.all([
       fetchExperiment(id),
-      fetchExperimentRows(id, { limit: 100, offset: 0 }),
+      fetchExperimentRowsFull(id, { limit: 200, offset: 0 }),
       fetchExperimentStats(id),
       fetchAdviceNotes(id),
       fetchExperimentNotes(id),
@@ -142,32 +143,14 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
 
         <section className="rounded-md border border-white/10 bg-white/5 p-5">
           <div className="mb-3 flex items-baseline justify-between">
-            <h2 className="text-lg font-semibold">データ（先頭 100 行）</h2>
+            <h2 className="text-lg font-semibold">データ（先頭 {rowsRes.items.length} 行）</h2>
+            <span className="text-xs opacity-60">セル単位の編集・行削除に対応</span>
           </div>
-          <div className="overflow-auto rounded-md border border-white/10 max-h-[480px]">
-            <table className="w-full text-xs">
-              <thead className="bg-white/5 sticky top-0">
-                <tr>
-                  {detail.columns.map((col) => (
-                    <th key={col.id} className="whitespace-nowrap px-3 py-2 text-left">
-                      {col.name}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rowsRes.items.map((row, idx) => (
-                  <tr key={idx} className="border-t border-white/5">
-                    {detail.columns.map((col) => (
-                      <td key={col.id} className="whitespace-nowrap px-3 py-1.5 opacity-85">
-                        {formatCellValue(row[col.name])}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <EditableRowsTable
+            experimentId={detail.id}
+            columns={detail.columns}
+            initialRows={rowsRes.items}
+          />
         </section>
       </div>
     );
@@ -177,11 +160,4 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
     }
     throw err;
   }
-}
-
-function formatCellValue(value: unknown): string {
-  if (value === null || value === undefined) return "";
-  if (typeof value === "string") return value;
-  if (typeof value === "number" || typeof value === "boolean") return String(value);
-  return JSON.stringify(value);
 }

@@ -10,6 +10,7 @@ import type {
   ExperimentMeta,
   ExperimentNote,
   ExperimentRow,
+  ExperimentRowRecord,
   ExperimentStats,
   ImportSuggestionResponse,
   IntegrityCheckResponse,
@@ -97,6 +98,38 @@ export async function fetchExperimentRows(
 
 export async function fetchExperimentStats(id: string): Promise<{ stats: ExperimentStats[] }> {
   return request<{ stats: ExperimentStats[] }>(`/api/experiments/${id}/stats`);
+}
+
+export interface ListRowsFullResponse {
+  items: ExperimentRowRecord[];
+  limit: number;
+  offset: number;
+}
+
+export async function fetchExperimentRowsFull(
+  id: string,
+  options?: { limit?: number; offset?: number },
+): Promise<ListRowsFullResponse> {
+  const params = new URLSearchParams();
+  if (options?.limit !== undefined) params.set("limit", String(options.limit));
+  if (options?.offset !== undefined) params.set("offset", String(options.offset));
+  const qs = params.toString();
+  return request<ListRowsFullResponse>(`/api/experiments/${id}/rows-full${qs ? `?${qs}` : ""}`);
+}
+
+export async function updateExperimentRow(
+  experimentId: string,
+  rowId: string,
+  data: ExperimentRow,
+): Promise<ExperimentRowRecord> {
+  return request<ExperimentRowRecord>(`/api/experiments/${experimentId}/rows/${rowId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ data }),
+  });
+}
+
+export async function deleteExperimentRow(experimentId: string, rowId: string): Promise<void> {
+  await request<void>(`/api/experiments/${experimentId}/rows/${rowId}`, { method: "DELETE" });
 }
 
 export interface PreviewResponse {
