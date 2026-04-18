@@ -1,9 +1,16 @@
 "use client";
 
-import { type PreviewResponse, createExperiment, previewImport } from "@/lib/api-client";
-import type { ColumnType, SourceFormat } from "@lab-ai/shared";
+import {
+  type PreviewResponse,
+  createExperiment,
+  fetchImportSuggestStatus,
+  previewImport,
+  sha256HexOfString,
+  suggestImport,
+} from "@/lib/api-client";
+import type { ColumnType, ImportSuggestionResponse, SourceFormat } from "@lab-ai/shared";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const COLUMN_TYPES: readonly ColumnType[] = [
   "number",
@@ -32,6 +39,8 @@ interface DraftColumn {
 export function ImportWizard() {
   const router = useRouter();
   const [filename, setFilename] = useState<string>("");
+  const [fileSize, setFileSize] = useState<number>(0);
+  const [fileHash, setFileHash] = useState<string | null>(null);
   const [text, setText] = useState<string>("");
   const [format, setFormat] = useState<SourceFormat>("csv");
   const [isDragging, setIsDragging] = useState(false);
@@ -42,20 +51,65 @@ export function ImportWizard() {
   const [tagsInput, setTagsInput] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [aiConfigured, setAiConfigured] = useState<boolean>(false);
+  const [aiBusy, setAiBusy] = useState<boolean>(false);
+  const [aiSuggestion, setAiSuggestion] = useState<ImportSuggestionResponse | null>(null);
+
+  useEffect(() => {
+    fetchImportSuggestStatus()
+      .then((r) => setAiConfigured(r.configured))
+      .catch(() => setAiConfigured(false));
+  }, []);
 
   const handleFile = useCallback(
     async (file: File) => {
       const contents = await file.text();
       const detected = detectFormatFromFilename(file.name);
+      const hash = await sha256HexOfString(contents);
       setFilename(file.name);
+      setFileSize(file.size);
+      setFileHash(hash);
       setFormat(detected);
       setText(contents);
+      setAiSuggestion(null);
       if (!name) {
         setName(file.name.replace(/\.[^.]+$/, ""));
       }
     },
     [name],
   );
+
+  const runAiSuggest = useCallback(async () => {
+    if (!text.trim()) {
+      setErrorMessage("先にファイルを選択するかテキストを貼り付けてください。");
+      return;
+    }
+    setAiBusy(true);
+    setErrorMessage(null);
+    try {
+      const sample = text.slice(0, 30_000);
+      const suggestion = await suggestImport(filename ? { sample, filename } : { sample });
+      setAiSuggestion(suggestion);
+      setFormat(suggestion.sourceFormat);
+      if (suggestion.proposedName && !name) setName(suggestion.proposedName);
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : "AI 解析に失敗しました");
+    } finally {
+      setAiBusy(false);
+    }
+  }, [text, filename, name]);
+
+  const applyAiSuggestion = useCallback(() => {
+    if (!aiSuggestion) return;
+    setColumns(
+      aiSuggestion.columns.map((col, idx) => ({
+        name: col.name,
+        type: col.type,
+        unit: col.unit ?? "",
+        position: idx,
+      })),
+    );
+  }, [aiSuggestion]);
 
   const onDrop = useCallback(
     async (ev: React.DragEvent<HTMLDivElement>) => {
@@ -112,11 +166,18 @@ export function ImportWizard() {
         .split(",")
         .map((t) => t.trim())
         .filter((t) => t.length > 0);
+      const textForHash = text || "";
+      const hash = fileHash ?? (await sha256HexOfString(textForHash));
       const created = await createExperiment({
         name: name.trim(),
         description: description.trim() || null,
         tags,
         sourceFormat: format,
+        source: {
+          filename: filename || null,
+          hash,
+          size: fileSize || new TextEncoder().encode(textForHash).length,
+        },
         columns: columns.map((col, idx) => ({
           name: col.name,
           type: col.type,
@@ -130,7 +191,20 @@ export function ImportWizard() {
       setErrorMessage(err instanceof Error ? err.message : "登録に失敗しました");
       setSubmitting(false);
     }
-  }, [preview, canSubmit, tagsInput, name, description, format, columns, router]);
+  }, [
+    preview,
+    canSubmit,
+    tagsInput,
+    name,
+    description,
+    format,
+    columns,
+    router,
+    fileHash,
+    fileSize,
+    filename,
+    text,
+  ]);
 
   return (
     <div className="space-y-6">
@@ -159,8 +233,75 @@ export function ImportWizard() {
               onChange={onFileInput}
             />
           </label>
-          {filename && <p className="mt-3 text-xs opacity-80">選択中: {filename}</p>}
+          {filename && (
+            <div className="mt-3 text-xs opacity-80 space-y-0.5">
+              <p>選択中: {filename}</p>
+              {fileSize > 0 && <p>サイズ: {fileSize.toLocaleString()} バイト</p>}
+              {fileHash && <p className="font-mono text-[10px] break-all">SHA-256: {fileHash}</p>}
+            </div>
+          )}
         </div>
+
+        {aiConfigured && (
+          <div className="mt-4 rounded-md border border-white/10 bg-black/30 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm">AI による取込設定の自動検出</p>
+                <p className="text-xs opacity-60">
+                  フォーマット・ヘッダ・カラム型をファイル冒頭から推論します
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={runAiSuggest}
+                disabled={aiBusy || !text.trim()}
+                className="rounded-md bg-white/10 px-3 py-1.5 text-sm hover:bg-white/15 disabled:opacity-40"
+              >
+                {aiBusy ? "解析中..." : "AI に任せる"}
+              </button>
+            </div>
+            {aiSuggestion && (
+              <div className="mt-3 rounded-md bg-white/5 p-3 text-xs space-y-1">
+                <p>
+                  <strong>フォーマット:</strong> {aiSuggestion.sourceFormat}
+                  <span className="opacity-60">
+                    {" "}
+                    · ヘッダ: {aiSuggestion.hasHeader ? "あり" : "なし"}
+                  </span>
+                </p>
+                {aiSuggestion.proposedName && (
+                  <p>
+                    <strong>提案名:</strong> {aiSuggestion.proposedName}
+                  </p>
+                )}
+                <p>
+                  <strong>カラム候補:</strong>
+                </p>
+                <ul className="list-disc list-inside">
+                  {aiSuggestion.columns.map((col) => (
+                    <li key={col.name}>
+                      {col.name} ({col.type}
+                      {col.unit ? `, ${col.unit}` : ""})
+                      {col.description ? (
+                        <span className="opacity-70"> — {col.description}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+                {aiSuggestion.notes && <p className="opacity-70">メモ: {aiSuggestion.notes}</p>}
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={applyAiSuggestion}
+                    className="rounded-md bg-[var(--accent)] px-2 py-1 text-xs text-white"
+                  >
+                    カラム設定に反映
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="mt-4 grid gap-3 sm:grid-cols-[auto_1fr] sm:items-center">
           <label className="text-sm opacity-80">フォーマット</label>

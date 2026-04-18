@@ -9,6 +9,8 @@ import type {
   ExperimentMeta,
   ExperimentRow,
   ExperimentStats,
+  ImportSuggestionResponse,
+  IntegrityCheckResponse,
   SourceFormat,
 } from "@lab-ai/shared";
 
@@ -181,4 +183,41 @@ export async function fetchAdviceNotes(experimentId?: string): Promise<{ items: 
 
 export async function fetchHealth(): Promise<{ status: string }> {
   return request<{ status: string }>("/health");
+}
+
+export interface VerifyFileInput {
+  sourceFormat: SourceFormat;
+  text: string;
+  filename?: string;
+}
+
+export async function verifyExperimentFile(
+  id: string,
+  input: VerifyFileInput,
+): Promise<IntegrityCheckResponse> {
+  return request<IntegrityCheckResponse>(`/api/experiments/${id}/verify`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function fetchImportSuggestStatus(): Promise<{ configured: boolean }> {
+  return request<{ configured: boolean }>("/api/experiments/suggest-import/status");
+}
+
+export async function suggestImport(input: {
+  sample: string;
+  filename?: string;
+}): Promise<ImportSuggestionResponse> {
+  return request<ImportSuggestionResponse>("/api/experiments/suggest-import", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function sha256HexOfString(text: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(text);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
