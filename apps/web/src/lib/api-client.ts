@@ -1,4 +1,5 @@
 import type {
+  AdviceChatMessage,
   AdviceNote,
   ColumnDefinition,
   ContextDocument,
@@ -318,6 +319,18 @@ export async function sha256HexOfString(text: string): Promise<string> {
 
 export async function fetchAdviceStatus(): Promise<{ configured: boolean }> {
   return request<{ configured: boolean }>("/api/advice/status");
+}
+
+export async function fetchAdviceHistory(
+  experimentId: string,
+): Promise<{ items: AdviceChatMessage[] }> {
+  const qs = new URLSearchParams({ experimentId }).toString();
+  return request<{ items: AdviceChatMessage[] }>(`/api/advice/history?${qs}`);
+}
+
+export async function clearAdviceHistory(experimentId: string): Promise<void> {
+  const qs = new URLSearchParams({ experimentId }).toString();
+  await request<void>(`/api/advice/history?${qs}`, { method: "DELETE" });
 }
 
 export interface ChatStreamMessage {
