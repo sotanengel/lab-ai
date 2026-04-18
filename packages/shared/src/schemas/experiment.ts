@@ -67,6 +67,13 @@ export type UpdateExperimentRequest = z.infer<typeof UpdateExperimentRequestSche
 export const ExperimentRowSchema = z.record(z.string(), z.unknown());
 export type ExperimentRow = z.infer<typeof ExperimentRowSchema>;
 
+export const ExperimentRowRecordSchema = z.object({
+  id: z.string(),
+  rowIndex: z.number().int(),
+  data: ExperimentRowSchema,
+});
+export type ExperimentRowRecord = z.infer<typeof ExperimentRowRecordSchema>;
+
 export const ExperimentStatsSchema = z.object({
   column: z.string(),
   count: z.number().int().min(0),

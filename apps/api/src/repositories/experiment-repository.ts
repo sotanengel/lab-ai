@@ -117,6 +117,77 @@ export function getExperimentRows(
   return rows.map((r) => r.data);
 }
 
+export interface RowWithMeta {
+  id: string;
+  rowIndex: number;
+  data: ExperimentRow;
+}
+
+export function getExperimentRowsWithIds(
+  db: Database,
+  id: string,
+  opts: { limit: number; offset: number },
+): RowWithMeta[] {
+  const rows = db
+    .select()
+    .from(schema.experimentRows)
+    .where(eq(schema.experimentRows.experimentId, id))
+    .orderBy(asc(schema.experimentRows.rowIndex))
+    .limit(opts.limit)
+    .offset(opts.offset)
+    .all();
+  return rows.map((r) => ({ id: r.id, rowIndex: r.rowIndex, data: r.data }));
+}
+
+export function updateExperimentRow(
+  db: Database,
+  experimentId: string,
+  rowId: string,
+  data: ExperimentRow,
+): RowWithMeta | null {
+  const existing = db
+    .select()
+    .from(schema.experimentRows)
+    .where(
+      and(
+        eq(schema.experimentRows.id, rowId),
+        eq(schema.experimentRows.experimentId, experimentId),
+      ),
+    )
+    .get();
+  if (!existing) return null;
+  db.update(schema.experimentRows).set({ data }).where(eq(schema.experimentRows.id, rowId)).run();
+  const now = nowIso();
+  db.update(schema.experiments)
+    .set({ updatedAt: now })
+    .where(eq(schema.experiments.id, experimentId))
+    .run();
+  return { id: existing.id, rowIndex: existing.rowIndex, data };
+}
+
+export function deleteExperimentRow(db: Database, experimentId: string, rowId: string): boolean {
+  const result = db
+    .delete(schema.experimentRows)
+    .where(
+      and(
+        eq(schema.experimentRows.id, rowId),
+        eq(schema.experimentRows.experimentId, experimentId),
+      ),
+    )
+    .run();
+  if (result.changes === 0) return false;
+  const remaining = db
+    .select({ count: sql<number>`count(*)` })
+    .from(schema.experimentRows)
+    .where(eq(schema.experimentRows.experimentId, experimentId))
+    .get();
+  db.update(schema.experiments)
+    .set({ rowCount: remaining?.count ?? 0, updatedAt: nowIso() })
+    .where(eq(schema.experiments.id, experimentId))
+    .run();
+  return true;
+}
+
 function upsertTags(db: Database, tagNames: readonly string[]): string[] {
   if (tagNames.length === 0) return [];
   const ids: string[] = [];
