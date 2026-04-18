@@ -1,3 +1,4 @@
+import { CommandPalette } from "@/components/CommandPalette";
 import { Header } from "@/components/Header";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </div>
         <OfflineIndicator />
         <ServiceWorkerRegister />
+        <CommandPalette />
       </body>
     </html>
   );

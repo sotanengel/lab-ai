@@ -21,6 +21,13 @@ export function Header() {
               {link.label}
             </Link>
           ))}
+          <span
+            aria-hidden
+            className="hidden md:inline-flex items-center rounded-md border border-white/10 px-2 py-0.5 text-[10px] opacity-60"
+            title="⌘K でコマンドパレット"
+          >
+            ⌘K
+          </span>
         </nav>
       </div>
     </header>
