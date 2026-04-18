@@ -309,14 +309,25 @@ export function AdviceChat({ experiment }: Props) {
           disabled={!online}
           className="min-h-[72px] flex-1 rounded-md bg-black/30 px-3 py-2 text-sm disabled:opacity-50"
         />
-        <button
-          type="button"
-          onClick={send}
-          disabled={busy || !input.trim() || !online}
-          className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
-        >
-          {busy ? "送信中..." : "送信"}
-        </button>
+        {busy ? (
+          <button
+            type="button"
+            onClick={() => controllerRef.current?.abort()}
+            className="rounded-md border border-red-500/40 px-4 py-2 text-sm font-semibold text-red-200 hover:bg-red-500/10"
+            aria-label="AI 応答を停止"
+          >
+            停止
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={send}
+            disabled={!input.trim() || !online}
+            className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
+          >
+            送信
+          </button>
+        )}
       </div>
       <p className="text-[10px] opacity-60">
         ⌘/Ctrl + Enter で送信。AI 機能は Anthropic Claude API を使用します。

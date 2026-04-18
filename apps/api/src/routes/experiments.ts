@@ -13,9 +13,11 @@ import { NotFoundError } from "../errors.js";
 import { logger } from "../logger.js";
 import {
   archiveExperiment,
+  archiveExperiments,
   countExperiments,
   createExperiment,
   deleteExperimentRow,
+  duplicateExperiment,
   getExperimentDetail,
   getExperimentRows,
   getExperimentRowsWithIds,
@@ -87,6 +89,16 @@ export const experimentsRouter = new Hono<AppEnv>()
     const detail = createExperiment(db, body);
     return c.json(detail, 201);
   })
+  .post(
+    "/bulk-archive",
+    zValidator("json", z.object({ ids: z.array(z.string().min(1)).min(1).max(500) })),
+    (c) => {
+      const db = c.get("db");
+      const { ids } = c.req.valid("json");
+      const archived = archiveExperiments(db, ids);
+      return c.json({ archived });
+    },
+  )
   .get("/:id", (c) => {
     const db = c.get("db");
     const detail = getExperimentDetail(db, c.req.param("id"));
@@ -104,6 +116,12 @@ export const experimentsRouter = new Hono<AppEnv>()
     const archived = archiveExperiment(db, c.req.param("id"));
     if (!archived) throw new NotFoundError("Experiment");
     return c.body(null, 204);
+  })
+  .post("/:id/duplicate", (c) => {
+    const db = c.get("db");
+    const detail = duplicateExperiment(db, c.req.param("id"));
+    if (!detail) throw new NotFoundError("Experiment");
+    return c.json(detail, 201);
   })
   .get("/:id/rows", zValidator("query", PaginationQuerySchema), (c) => {
     const db = c.get("db");

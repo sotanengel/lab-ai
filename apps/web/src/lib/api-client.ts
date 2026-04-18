@@ -176,6 +176,17 @@ export async function archiveExperiment(id: string): Promise<void> {
   await request<void>(`/api/experiments/${id}`, { method: "DELETE" });
 }
 
+export async function bulkArchiveExperiments(ids: string[]): Promise<{ archived: number }> {
+  return request<{ archived: number }>("/api/experiments/bulk-archive", {
+    method: "POST",
+    body: JSON.stringify({ ids }),
+  });
+}
+
+export async function duplicateExperiment(id: string): Promise<ExperimentDetail> {
+  return request<ExperimentDetail>(`/api/experiments/${id}/duplicate`, { method: "POST" });
+}
+
 export function exportExperimentUrl(id: string, format: "csv" | "json" | "xlsx"): string {
   return `${resolveBaseUrl()}/api/experiments/${id}/export?format=${format}`;
 }

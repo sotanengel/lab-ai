@@ -1,24 +1,46 @@
 "use client";
 
-import { archiveExperiment, exportExperimentUrl } from "@/lib/api-client";
+import { useToast } from "@/components/ToastProvider";
+import { archiveExperiment, duplicateExperiment, exportExperimentUrl } from "@/lib/api-client";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useTransition } from "react";
 
 export function ExperimentActions({ id }: { id: string }) {
   const router = useRouter();
+  const toast = useToast();
   const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
 
   const onArchive = () => {
     if (!confirm("この実験セットをアーカイブしますか？")) return;
-    setError(null);
     startTransition(async () => {
       try {
         await archiveExperiment(id);
+        toast.show({ kind: "success", message: "アーカイブしました" });
         router.push("/");
         router.refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "削除に失敗しました");
+        toast.show({
+          kind: "error",
+          message: "アーカイブに失敗しました",
+          detail: err instanceof Error ? err.message : "unknown",
+        });
+      }
+    });
+  };
+
+  const onDuplicate = () => {
+    startTransition(async () => {
+      try {
+        const copy = await duplicateExperiment(id);
+        toast.show({ kind: "success", message: `「${copy.name}」を作成しました` });
+        router.push(`/experiments/${copy.id}`);
+        router.refresh();
+      } catch (err) {
+        toast.show({
+          kind: "error",
+          message: "複製に失敗しました",
+          detail: err instanceof Error ? err.message : "unknown",
+        });
       }
     });
   };
@@ -48,15 +70,24 @@ export function ExperimentActions({ id }: { id: string }) {
           XLSX
         </a>
       </div>
-      <button
-        type="button"
-        onClick={onArchive}
-        disabled={isPending}
-        className="rounded-md border border-red-500/40 px-3 py-1.5 text-red-200 hover:bg-red-500/10 disabled:opacity-50"
-      >
-        {isPending ? "処理中..." : "アーカイブ"}
-      </button>
-      {error && <p className="text-xs text-red-300">{error}</p>}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={onDuplicate}
+          disabled={isPending}
+          className="rounded-md border border-white/20 px-3 py-1.5 hover:bg-white/5 disabled:opacity-50"
+        >
+          複製
+        </button>
+        <button
+          type="button"
+          onClick={onArchive}
+          disabled={isPending}
+          className="rounded-md border border-red-500/40 px-3 py-1.5 text-red-200 hover:bg-red-500/10 disabled:opacity-50"
+        >
+          {isPending ? "処理中..." : "アーカイブ"}
+        </button>
+      </div>
     </div>
   );
 }

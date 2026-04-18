@@ -305,6 +305,97 @@ export function archiveExperiment(db: Database, id: string): boolean {
   return result.changes > 0;
 }
 
+export function duplicateExperiment(db: Database, sourceId: string): ExperimentDetail | null {
+  const existing = getExperimentDetail(db, sourceId);
+  if (!existing) return null;
+
+  const rows = db
+    .select()
+    .from(schema.experimentRows)
+    .where(eq(schema.experimentRows.experimentId, sourceId))
+    .orderBy(asc(schema.experimentRows.rowIndex))
+    .all();
+
+  const tagRows = db
+    .select()
+    .from(schema.experimentTags)
+    .where(eq(schema.experimentTags.experimentId, sourceId))
+    .all();
+
+  const newId = nanoid();
+  const now = nowIso();
+
+  db.transaction((tx) => {
+    tx.insert(schema.experiments)
+      .values({
+        id: newId,
+        name: `${existing.name} (copy)`,
+        description: existing.description ?? null,
+        sourceFormat: existing.sourceFormat,
+        sourceFilename: existing.sourceFilename ?? null,
+        sourceHash: existing.sourceHash ?? null,
+        sourceSize: existing.sourceSize ?? null,
+        rowCount: rows.length,
+        archived: false,
+        registeredAt: now,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .run();
+
+    if (existing.columns.length > 0) {
+      tx.insert(schema.experimentColumns)
+        .values(
+          existing.columns.map((col) => ({
+            id: nanoid(),
+            experimentId: newId,
+            name: col.name,
+            type: col.type,
+            unit: col.unit ?? null,
+            position: col.position,
+          })),
+        )
+        .run();
+    }
+
+    if (rows.length > 0) {
+      const chunkSize = 200;
+      const values = rows.map((row) => ({
+        id: nanoid(),
+        experimentId: newId,
+        rowIndex: row.rowIndex,
+        data: row.data,
+      }));
+      for (let i = 0; i < values.length; i += chunkSize) {
+        tx.insert(schema.experimentRows)
+          .values(values.slice(i, i + chunkSize))
+          .run();
+      }
+    }
+
+    if (tagRows.length > 0) {
+      tx.insert(schema.experimentTags)
+        .values(tagRows.map((t) => ({ experimentId: newId, tagId: t.tagId })))
+        .run();
+    }
+  });
+
+  const detail = getExperimentDetail(db, newId);
+  if (!detail) throw new Error("duplicate failed");
+  return detail;
+}
+
+export function archiveExperiments(db: Database, ids: readonly string[]): number {
+  if (ids.length === 0) return 0;
+  const mutableIds = [...ids];
+  const result = db
+    .update(schema.experiments)
+    .set({ archived: true, updatedAt: nowIso() })
+    .where(and(inArray(schema.experiments.id, mutableIds), eq(schema.experiments.archived, false)))
+    .run();
+  return result.changes;
+}
+
 export function countExperiments(db: Database, includeArchived: boolean): number {
   const row = db
     .select({ count: sql<number>`count(*)` })
