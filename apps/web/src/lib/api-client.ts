@@ -221,3 +221,83 @@ export async function sha256HexOfString(text: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
+
+export async function fetchAdviceStatus(): Promise<{ configured: boolean }> {
+  return request<{ configured: boolean }>("/api/advice/status");
+}
+
+export interface ChatStreamMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface StreamAdviceHandlers {
+  onDelta?: (text: string) => void;
+  onDone?: (result: { text: string; usage: { inputTokens: number; outputTokens: number } }) => void;
+  onError?: (message: string) => void;
+}
+
+export async function streamAdviceChat(
+  input: {
+    experimentId: string;
+    contextDocumentIds: string[];
+    messages: ChatStreamMessage[];
+  },
+  handlers: StreamAdviceHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
+  const response = await fetch(`${resolveBaseUrl()}/api/advice/chat`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input),
+    signal: signal ?? null,
+  });
+  if (!response.ok || !response.body) {
+    const body = await response.text();
+    throw new ApiError(body || `Stream failed ${response.status}`, response.status);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let boundary = buffer.indexOf("\n\n");
+    while (boundary !== -1) {
+      const frame = buffer.slice(0, boundary);
+      buffer = buffer.slice(boundary + 2);
+      handleSseFrame(frame, handlers);
+      boundary = buffer.indexOf("\n\n");
+    }
+  }
+}
+
+function handleSseFrame(frame: string, handlers: StreamAdviceHandlers): void {
+  const lines = frame.split("\n");
+  let event = "message";
+  const dataLines: string[] = [];
+  for (const line of lines) {
+    if (line.startsWith("event:")) {
+      event = line.slice(6).trim();
+    } else if (line.startsWith("data:")) {
+      dataLines.push(line.slice(5).trim());
+    }
+  }
+  if (dataLines.length === 0) return;
+  const data = dataLines.join("\n");
+  try {
+    const parsed = JSON.parse(data) as unknown;
+    if (event === "delta" && typeof (parsed as { text?: unknown }).text === "string") {
+      handlers.onDelta?.((parsed as { text: string }).text);
+    } else if (event === "done") {
+      handlers.onDone?.(parsed as Parameters<NonNullable<StreamAdviceHandlers["onDone"]>>[0]);
+    } else if (event === "error") {
+      const message = (parsed as { message?: string }).message ?? "stream error";
+      handlers.onError?.(message);
+    }
+  } catch (err) {
+    handlers.onError?.(err instanceof Error ? err.message : "Invalid stream frame");
+  }
+}

@@ -1,3 +1,4 @@
+import { AdviceChat } from "@/components/AdviceChat";
 import { ApiError, fetchExperiment, fetchExperimentRows } from "@/lib/api-client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -39,6 +40,8 @@ export default async function ExperimentChartsPage({ params }: PageProps) {
         </header>
 
         <ChartsWorkbench detail={detail} rows={rowsRes.items} />
+
+        <AdviceChat experiment={{ id: detail.id, name: detail.name }} />
       </div>
     );
   } catch (err) {
