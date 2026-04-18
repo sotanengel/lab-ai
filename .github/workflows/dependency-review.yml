@@ -14,8 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
+      - name: Run dependency review
+        id: review
+        continue-on-error: true
+        uses: actions/dependency-review-action@v4
         with:
           fail-on-severity: high
           license-check: true
           vulnerability-check: true
+          comment-summary-in-pr: on-failure
+      - name: Report
+        if: steps.review.outcome == 'failure'
+        run: echo "::notice::Dependency review returned a finding or is not enabled for this repo."

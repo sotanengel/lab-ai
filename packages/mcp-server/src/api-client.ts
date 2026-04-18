@@ -25,7 +25,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export async function listExperiments(): Promise<{ items: ExperimentMeta[] }> {
-  return request<{ items: ExperimentMeta[] }>(`/api/experiments?limit=200`);
+  return request<{ items: ExperimentMeta[] }>("/api/experiments?limit=200");
 }
 
 export async function getExperiment(id: string): Promise<ExperimentDetail> {
@@ -36,9 +36,7 @@ export async function getExperimentRows(
   id: string,
   limit: number,
 ): Promise<{ items: ExperimentRow[] }> {
-  return request<{ items: ExperimentRow[] }>(
-    `/api/experiments/${id}/rows?limit=${limit}&offset=0`,
-  );
+  return request<{ items: ExperimentRow[] }>(`/api/experiments/${id}/rows?limit=${limit}&offset=0`);
 }
 
 export async function getExperimentStats(id: string): Promise<{ stats: ExperimentStats[] }> {
@@ -59,7 +57,7 @@ export async function saveAdviceNote(input: {
   title: string;
   body: string;
 }): Promise<AdviceNote> {
-  return request<AdviceNote>(`/api/advice-notes`, {
+  return request<AdviceNote>("/api/advice-notes", {
     method: "POST",
     body: JSON.stringify(input),
   });

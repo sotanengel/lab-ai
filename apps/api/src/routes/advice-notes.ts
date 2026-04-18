@@ -40,10 +40,6 @@ export const adviceNotesRouter = new Hono<AppEnv>()
         createdAt: now,
       })
       .run();
-    const created = db
-      .select()
-      .from(schema.adviceNotes)
-      .where(eq(schema.adviceNotes.id, id))
-      .get();
+    const created = db.select().from(schema.adviceNotes).where(eq(schema.adviceNotes.id, id)).get();
     return c.json(created, 201);
   });

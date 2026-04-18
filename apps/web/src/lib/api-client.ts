@@ -9,6 +9,8 @@ import type {
   ExperimentMeta,
   ExperimentRow,
   ExperimentStats,
+  ImportSuggestionResponse,
+  IntegrityCheckResponse,
   SourceFormat,
 } from "@lab-ai/shared";
 
@@ -23,7 +25,10 @@ function resolveBaseUrl(): string {
 }
 
 export class ApiError extends Error {
-  constructor(message: string, public readonly status: number) {
+  constructor(
+    message: string,
+    public readonly status: number,
+  ) {
     super(message);
     this.name = "ApiError";
   }
@@ -63,9 +68,7 @@ export async function fetchExperiments(options?: {
   if (options?.limit !== undefined) params.set("limit", String(options.limit));
   if (options?.offset !== undefined) params.set("offset", String(options.offset));
   const qs = params.toString();
-  return request<ListExperimentsResponse>(
-    `/api/experiments${qs ? `?${qs}` : ""}`,
-  );
+  return request<ListExperimentsResponse>(`/api/experiments${qs ? `?${qs}` : ""}`);
 }
 
 export async function fetchExperiment(id: string): Promise<ExperimentDetail> {
@@ -86,19 +89,15 @@ export async function fetchExperimentRows(
   if (options?.limit !== undefined) params.set("limit", String(options.limit));
   if (options?.offset !== undefined) params.set("offset", String(options.offset));
   const qs = params.toString();
-  return request<ListRowsResponse>(
-    `/api/experiments/${id}/rows${qs ? `?${qs}` : ""}`,
-  );
+  return request<ListRowsResponse>(`/api/experiments/${id}/rows${qs ? `?${qs}` : ""}`);
 }
 
-export async function fetchExperimentStats(
-  id: string,
-): Promise<{ stats: ExperimentStats[] }> {
+export async function fetchExperimentStats(id: string): Promise<{ stats: ExperimentStats[] }> {
   return request<{ stats: ExperimentStats[] }>(`/api/experiments/${id}/stats`);
 }
 
 export interface PreviewResponse {
-  columns: Array<Omit<ColumnDefinition, "id">>;
+  columns: Omit<ColumnDefinition, "id">[];
   rows: ExperimentRow[];
   totalRows: number;
 }
@@ -108,16 +107,14 @@ export async function previewImport(input: {
   text: string;
   maxRows?: number;
 }): Promise<PreviewResponse> {
-  return request<PreviewResponse>(`/api/experiments/preview`, {
+  return request<PreviewResponse>("/api/experiments/preview", {
     method: "POST",
     body: JSON.stringify({ maxRows: 50, ...input }),
   });
 }
 
-export async function createExperiment(
-  input: CreateExperimentRequest,
-): Promise<ExperimentDetail> {
-  return request<ExperimentDetail>(`/api/experiments`, {
+export async function createExperiment(input: CreateExperimentRequest): Promise<ExperimentDetail> {
+  return request<ExperimentDetail>("/api/experiments", {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -162,7 +159,7 @@ export async function fetchContextDocuments(query?: string): Promise<ListContext
 export async function createContextDocument(
   input: CreateContextDocumentRequest,
 ): Promise<ContextDocument> {
-  return request<ContextDocument>(`/api/context-documents`, {
+  return request<ContextDocument>("/api/context-documents", {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -172,10 +169,8 @@ export async function deleteContextDocument(id: string): Promise<void> {
   await request<void>(`/api/context-documents/${id}`, { method: "DELETE" });
 }
 
-export async function createAdviceNote(
-  input: CreateAdviceNoteRequest,
-): Promise<AdviceNote> {
-  return request<AdviceNote>(`/api/advice-notes`, {
+export async function createAdviceNote(input: CreateAdviceNoteRequest): Promise<AdviceNote> {
+  return request<AdviceNote>("/api/advice-notes", {
     method: "POST",
     body: JSON.stringify(input),
   });
@@ -187,5 +182,122 @@ export async function fetchAdviceNotes(experimentId?: string): Promise<{ items: 
 }
 
 export async function fetchHealth(): Promise<{ status: string }> {
-  return request<{ status: string }>(`/health`);
+  return request<{ status: string }>("/health");
+}
+
+export interface VerifyFileInput {
+  sourceFormat: SourceFormat;
+  text: string;
+  filename?: string;
+}
+
+export async function verifyExperimentFile(
+  id: string,
+  input: VerifyFileInput,
+): Promise<IntegrityCheckResponse> {
+  return request<IntegrityCheckResponse>(`/api/experiments/${id}/verify`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function fetchImportSuggestStatus(): Promise<{ configured: boolean }> {
+  return request<{ configured: boolean }>("/api/experiments/suggest-import/status");
+}
+
+export async function suggestImport(input: {
+  sample: string;
+  filename?: string;
+}): Promise<ImportSuggestionResponse> {
+  return request<ImportSuggestionResponse>("/api/experiments/suggest-import", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function sha256HexOfString(text: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const bytes = encoder.encode(text);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+export async function fetchAdviceStatus(): Promise<{ configured: boolean }> {
+  return request<{ configured: boolean }>("/api/advice/status");
+}
+
+export interface ChatStreamMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface StreamAdviceHandlers {
+  onDelta?: (text: string) => void;
+  onDone?: (result: { text: string; usage: { inputTokens: number; outputTokens: number } }) => void;
+  onError?: (message: string) => void;
+}
+
+export async function streamAdviceChat(
+  input: {
+    experimentId: string;
+    contextDocumentIds: string[];
+    messages: ChatStreamMessage[];
+  },
+  handlers: StreamAdviceHandlers,
+  signal?: AbortSignal,
+): Promise<void> {
+  const response = await fetch(`${resolveBaseUrl()}/api/advice/chat`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(input),
+    signal: signal ?? null,
+  });
+  if (!response.ok || !response.body) {
+    const body = await response.text();
+    throw new ApiError(body || `Stream failed ${response.status}`, response.status);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let boundary = buffer.indexOf("\n\n");
+    while (boundary !== -1) {
+      const frame = buffer.slice(0, boundary);
+      buffer = buffer.slice(boundary + 2);
+      handleSseFrame(frame, handlers);
+      boundary = buffer.indexOf("\n\n");
+    }
+  }
+}
+
+function handleSseFrame(frame: string, handlers: StreamAdviceHandlers): void {
+  const lines = frame.split("\n");
+  let event = "message";
+  const dataLines: string[] = [];
+  for (const line of lines) {
+    if (line.startsWith("event:")) {
+      event = line.slice(6).trim();
+    } else if (line.startsWith("data:")) {
+      dataLines.push(line.slice(5).trim());
+    }
+  }
+  if (dataLines.length === 0) return;
+  const data = dataLines.join("\n");
+  try {
+    const parsed = JSON.parse(data) as unknown;
+    if (event === "delta" && typeof (parsed as { text?: unknown }).text === "string") {
+      handlers.onDelta?.((parsed as { text: string }).text);
+    } else if (event === "done") {
+      handlers.onDone?.(parsed as Parameters<NonNullable<StreamAdviceHandlers["onDone"]>>[0]);
+    } else if (event === "error") {
+      const message = (parsed as { message?: string }).message ?? "stream error";
+      handlers.onError?.(message);
+    }
+  } catch (err) {
+    handlers.onError?.(err instanceof Error ? err.message : "Invalid stream frame");
+  }
 }

@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { fetchExperiments } from "@/lib/api-client";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 

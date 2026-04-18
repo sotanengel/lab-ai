@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# Run Biome on staged files.
+pnpm exec lint-staged

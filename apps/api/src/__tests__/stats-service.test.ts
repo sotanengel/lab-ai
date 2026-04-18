@@ -4,9 +4,7 @@ import { computeColumnStats } from "../services/stats-service.js";
 
 describe("computeColumnStats", () => {
   it("computes basic statistics for a numeric column", () => {
-    const columns: ColumnDefinition[] = [
-      { id: "c1", name: "value", type: "number", position: 0 },
-    ];
+    const columns: ColumnDefinition[] = [{ id: "c1", name: "value", type: "number", position: 0 }];
     const rows: ExperimentRow[] = [
       { value: 1 },
       { value: 2 },
@@ -25,9 +23,7 @@ describe("computeColumnStats", () => {
   });
 
   it("handles null and empty values", () => {
-    const columns: ColumnDefinition[] = [
-      { id: "c1", name: "value", type: "number", position: 0 },
-    ];
+    const columns: ColumnDefinition[] = [{ id: "c1", name: "value", type: "number", position: 0 }];
     const rows: ExperimentRow[] = [{ value: 1 }, { value: null }, { value: "" }, { value: 3 }];
     const [stats] = computeColumnStats(columns, rows);
     expect(stats).toBeDefined();

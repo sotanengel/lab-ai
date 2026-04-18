@@ -18,10 +18,15 @@ describe("inferColumnType", () => {
     expect(inferColumnType(["true", "false", "true"])).toBe("boolean");
   });
 
-  it("falls back to string for heterogeneous data", () => {
+  it("labels low-cardinality text as category", () => {
     expect(inferColumnType(["x1", "long text here", "another value", "more diverse"])).toBe(
-      "string",
+      "category",
     );
+  });
+
+  it("labels high-cardinality text as string", () => {
+    const samples = Array.from({ length: 50 }, (_, i) => `unique-value-${i}`);
+    expect(inferColumnType(samples)).toBe("string");
   });
 
   it("returns string for empty input", () => {

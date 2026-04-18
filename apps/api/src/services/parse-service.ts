@@ -2,7 +2,7 @@ import type { ColumnDefinition, ExperimentRow, SourceFormat } from "@lab-ai/shar
 import { inferColumnType } from "./column-inference.js";
 
 export interface ParseResult {
-  columns: Array<Omit<ColumnDefinition, "id">>;
+  columns: Omit<ColumnDefinition, "id">[];
   rows: ExperimentRow[];
 }
 
@@ -27,9 +27,9 @@ function parseCsvLine(line: string, delimiter: string): string[] {
   for (let i = 0; i < line.length; i += 1) {
     const ch = line[i];
     if (inQuotes) {
-      if (ch === "\"") {
-        if (line[i + 1] === "\"") {
-          current += "\"";
+      if (ch === '"') {
+        if (line[i + 1] === '"') {
+          current += '"';
           i += 1;
         } else {
           inQuotes = false;
@@ -37,7 +37,7 @@ function parseCsvLine(line: string, delimiter: string): string[] {
       } else {
         current += ch;
       }
-    } else if (ch === "\"") {
+    } else if (ch === '"') {
       inQuotes = true;
     } else if (ch === delimiter) {
       fields.push(current);
@@ -120,6 +120,6 @@ export function parseInputText(text: string, format: SourceFormat): ParseResult 
     case "txt":
       return parseDelimited(text);
     default:
-      throw new Error(`Unsupported source format: ${format satisfies never}`);
+      throw new Error(`Unsupported source format: ${String(format)}`);
   }
 }

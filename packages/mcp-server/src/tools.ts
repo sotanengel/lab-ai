@@ -22,7 +22,7 @@ const SaveAdviceInput = z.object({
 });
 
 export interface ToolCallResult {
-  content: Array<{ type: "text"; text: string }>;
+  content: { type: "text"; text: string }[];
   isError?: boolean;
 }
 
@@ -50,7 +50,8 @@ export const toolDescriptors: ToolDescriptor[] = [
   },
   {
     name: "get_experiment_data",
-    description: "Return the statistical summary plus the first N rows of the specified experiment.",
+    description:
+      "Return the statistical summary plus the first N rows of the specified experiment.",
     inputSchema: {
       type: "object",
       properties: {

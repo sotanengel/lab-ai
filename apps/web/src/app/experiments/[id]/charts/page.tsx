@@ -1,11 +1,8 @@
+import { AdviceChat } from "@/components/AdviceChat";
+import { ApiError, fetchExperiment, fetchExperimentRows } from "@/lib/api-client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChartsWorkbench } from "./ChartsWorkbench";
-import {
-  ApiError,
-  fetchExperiment,
-  fetchExperimentRows,
-} from "@/lib/api-client";
 
 export const dynamic = "force-dynamic";
 
@@ -37,15 +34,14 @@ export default async function ExperimentChartsPage({ params }: PageProps) {
             </div>
             <h1 className="mt-1 text-2xl font-bold">{detail.name} — 可視化</h1>
           </div>
-          <Link
-            href={`/experiments/${detail.id}`}
-            className="text-sm opacity-80 underline"
-          >
+          <Link href={`/experiments/${detail.id}`} className="text-sm opacity-80 underline">
             ← 詳細に戻る
           </Link>
         </header>
 
         <ChartsWorkbench detail={detail} rows={rowsRes.items} />
+
+        <AdviceChat experiment={{ id: detail.id, name: detail.name }} />
       </div>
     );
   } catch (err) {

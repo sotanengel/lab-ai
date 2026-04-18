@@ -1,13 +1,15 @@
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ExperimentActions } from "./ExperimentActions";
-import { StatsTable } from "./StatsTable";
 import {
   ApiError,
+  fetchAdviceNotes,
   fetchExperiment,
   fetchExperimentRows,
   fetchExperimentStats,
 } from "@/lib/api-client";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ExperimentActions } from "./ExperimentActions";
+import { IntegrityChecker } from "./IntegrityChecker";
+import { StatsTable } from "./StatsTable";
 
 export const dynamic = "force-dynamic";
 
@@ -18,10 +20,11 @@ interface PageProps {
 export default async function ExperimentDetailPage({ params }: PageProps) {
   const { id } = await params;
   try {
-    const [detail, rowsRes, statsRes] = await Promise.all([
+    const [detail, rowsRes, statsRes, notesRes] = await Promise.all([
       fetchExperiment(id),
       fetchExperimentRows(id, { limit: 100, offset: 0 }),
       fetchExperimentStats(id),
+      fetchAdviceNotes(id),
     ]);
 
     return (
@@ -37,9 +40,7 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
             </div>
             <h1 className="mt-1 text-3xl font-bold">{detail.name}</h1>
             {detail.description && (
-              <p className="mt-2 text-sm opacity-80 whitespace-pre-wrap">
-                {detail.description}
-              </p>
+              <p className="mt-2 text-sm opacity-80 whitespace-pre-wrap">{detail.description}</p>
             )}
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs opacity-80">
               <span>{detail.sourceFormat.toUpperCase()}</span>
@@ -48,7 +49,15 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
               <span>·</span>
               <span>{detail.columns.length} カラム</span>
               <span>·</span>
-              <span>作成 {new Date(detail.createdAt).toLocaleString("ja-JP")}</span>
+              <span>登録日 {new Date(detail.registeredAt).toLocaleString("ja-JP")}</span>
+              {detail.sourceFilename && (
+                <>
+                  <span>·</span>
+                  <span>
+                    元ファイル <span className="font-mono">{detail.sourceFilename}</span>
+                  </span>
+                </>
+              )}
             </div>
             {detail.tags.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
@@ -100,6 +109,31 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
           <StatsTable stats={statsRes.stats} />
         </section>
 
+        <IntegrityChecker
+          experimentId={detail.id}
+          registeredHash={detail.sourceHash}
+          sourceFormat={detail.sourceFormat}
+        />
+
+        {notesRes.items.length > 0 && (
+          <section className="rounded-md border border-white/10 bg-white/5 p-5">
+            <h2 className="text-lg font-semibold mb-3">AI アドバイスノート</h2>
+            <ul className="space-y-3">
+              {notesRes.items.map((note) => (
+                <li key={note.id} className="rounded-md border border-white/10 bg-white/5 p-3">
+                  <div className="text-xs opacity-70">
+                    {new Date(note.createdAt).toLocaleString("ja-JP")}
+                  </div>
+                  <div className="mt-1 font-medium">{note.title}</div>
+                  <pre className="mt-2 whitespace-pre-wrap font-sans text-sm opacity-85">
+                    {note.body}
+                  </pre>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         <section className="rounded-md border border-white/10 bg-white/5 p-5">
           <div className="mb-3 flex items-baseline justify-between">
             <h2 className="text-lg font-semibold">データ（先頭 100 行）</h2>
@@ -119,10 +153,7 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
                 {rowsRes.items.map((row, idx) => (
                   <tr key={idx} className="border-t border-white/5">
                     {detail.columns.map((col) => (
-                      <td
-                        key={col.id}
-                        className="whitespace-nowrap px-3 py-1.5 opacity-85"
-                      >
+                      <td key={col.id} className="whitespace-nowrap px-3 py-1.5 opacity-85">
                         {formatCellValue(row[col.name])}
                       </td>
                     ))}

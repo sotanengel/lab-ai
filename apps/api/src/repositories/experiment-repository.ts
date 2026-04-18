@@ -15,15 +15,22 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-function toMeta(row: typeof schema.experiments.$inferSelect, tagNames: readonly string[]): ExperimentMeta {
+function toMeta(
+  row: typeof schema.experiments.$inferSelect,
+  tagNames: readonly string[],
+): ExperimentMeta {
   return {
     id: row.id,
     name: row.name,
     description: row.description,
     tags: [...tagNames],
     sourceFormat: row.sourceFormat as ExperimentMeta["sourceFormat"],
+    sourceFilename: row.sourceFilename,
+    sourceHash: row.sourceHash,
+    sourceSize: row.sourceSize,
     rowCount: row.rowCount,
     archived: Boolean(row.archived),
+    registeredAt: row.registeredAt,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -137,8 +144,12 @@ export function createExperiment(db: Database, input: CreateExperimentRequest): 
         name: input.name,
         description: input.description ?? null,
         sourceFormat: input.sourceFormat,
+        sourceFilename: input.source?.filename ?? null,
+        sourceHash: input.source?.hash ?? null,
+        sourceSize: input.source?.size ?? null,
         rowCount: input.rows.length,
         archived: false,
+        registeredAt: now,
         createdAt: now,
         updatedAt: now,
       })
@@ -166,11 +177,13 @@ export function createExperiment(db: Database, input: CreateExperimentRequest): 
       // insert in chunks to stay under SQLite variable limit
       const chunkSize = 200;
       for (let i = 0; i < rowValues.length; i += chunkSize) {
-        tx.insert(schema.experimentRows).values(rowValues.slice(i, i + chunkSize)).run();
+        tx.insert(schema.experimentRows)
+          .values(rowValues.slice(i, i + chunkSize))
+          .run();
       }
     }
 
-    const tagIds = upsertTags(tx as Database, input.tags);
+    const tagIds = upsertTags(tx as unknown as Database, input.tags);
     if (tagIds.length > 0) {
       tx.insert(schema.experimentTags)
         .values(tagIds.map((tagId) => ({ experimentId: id, tagId })))
@@ -200,7 +213,7 @@ export function updateExperiment(
 
     if (input.tags) {
       tx.delete(schema.experimentTags).where(eq(schema.experimentTags.experimentId, id)).run();
-      const tagIds = upsertTags(tx as Database, input.tags);
+      const tagIds = upsertTags(tx as unknown as Database, input.tags);
       if (tagIds.length > 0) {
         tx.insert(schema.experimentTags)
           .values(tagIds.map((tagId) => ({ experimentId: id, tagId })))

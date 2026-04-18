@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
 import { buildHistogram, computeBoxStats, extractNumericSeries } from "@/lib/chart-utils";
+import { describe, expect, it } from "vitest";
 
 describe("buildHistogram", () => {
   it("buckets values into the requested bin count", () => {
