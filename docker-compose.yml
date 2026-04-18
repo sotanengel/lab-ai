@@ -1,0 +1,51 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    image: lab-ai/api:local
+    environment:
+      API_PORT: 8787
+      API_HOST: 0.0.0.0
+      DATABASE_URL: file:/data/lab-ai.db
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "${API_PORT:-8787}:8787"
+    volumes:
+      - lab-ai-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:8787/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+    image: lab-ai/web:local
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:${API_PORT:-8787}
+      PORT: 3000
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_started
+
+  mcp:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.mcp
+    image: lab-ai/mcp:local
+    environment:
+      API_BASE_URL: http://api:8787
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    depends_on:
+      api:
+        condition: service_started
+    stdin_open: true
+    tty: true
+
+volumes:
+  lab-ai-data:

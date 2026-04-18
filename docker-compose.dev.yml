@@ -1,0 +1,18 @@
+services:
+  api:
+    command: ["pnpm", "--filter", "@lab-ai/api", "dev"]
+    environment:
+      NODE_ENV: development
+      LOG_LEVEL: debug
+    volumes:
+      - ./apps/api:/app/apps/api
+      - ./packages/shared:/app/packages/shared
+      - ./packages/db:/app/packages/db
+
+  web:
+    command: ["pnpm", "--filter", "@lab-ai/web", "dev"]
+    environment:
+      NODE_ENV: development
+    volumes:
+      - ./apps/web:/app/apps/web
+      - ./packages/shared:/app/packages/shared

@@ -1,0 +1,26 @@
+# syntax=docker/dockerfile:1.7
+FROM node:20-bookworm-slim AS base
+ENV PNPM_HOME="/pnpm" PATH="/pnpm:${PATH}" CI=1
+RUN corepack enable
+WORKDIR /app
+
+FROM base AS deps
+COPY pnpm-workspace.yaml pnpm-lock.yaml* package.json .npmrc* ./
+COPY packages/shared/package.json packages/shared/
+COPY packages/mcp-server/package.json packages/mcp-server/
+RUN --mount=type=cache,target=/pnpm/store pnpm fetch --prod=false
+
+FROM deps AS build
+COPY tsconfig.base.json ./
+COPY packages/shared ./packages/shared
+COPY packages/mcp-server ./packages/mcp-server
+RUN pnpm install --frozen-lockfile=false --offline
+RUN pnpm --filter @lab-ai/shared build \
+ && pnpm --filter @lab-ai/mcp-server build
+
+FROM node:20-bookworm-slim AS runtime
+ENV NODE_ENV=production
+WORKDIR /app
+RUN corepack enable
+COPY --from=build /app /app
+CMD ["node", "packages/mcp-server/dist/server.js"]
