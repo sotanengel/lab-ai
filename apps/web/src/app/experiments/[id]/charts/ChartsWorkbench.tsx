@@ -1,5 +1,6 @@
 "use client";
 
+import { BoxPlot } from "@/components/BoxPlot";
 import {
   buildHistogram,
   extractNumericSeries,
@@ -24,14 +25,17 @@ import {
   ZAxis,
 } from "recharts";
 
-type ChartKind = "line" | "scatter" | "bar" | "histogram";
+type ChartKind = "line" | "scatter" | "bar" | "histogram" | "box";
 
 const CHART_LABELS: Record<ChartKind, string> = {
   line: "折れ線",
   scatter: "散布図",
   bar: "棒グラフ",
   histogram: "ヒストグラム",
+  box: "箱ひげ図",
 };
+
+const SERIES_COLORS = ["#4f8cff", "#f59e0b", "#10b981", "#e11d48", "#8b5cf6", "#14b8a6"];
 
 interface Props {
   detail: ExperimentDetail;
@@ -125,7 +129,7 @@ export function ChartsWorkbench({ detail, rows }: Props) {
           </div>
         </div>
 
-        {chartKind !== "histogram" && (
+        {chartKind !== "histogram" && chartKind !== "box" && (
           <ColumnPicker
             label="X 軸"
             columns={detail.columns}
@@ -136,7 +140,11 @@ export function ChartsWorkbench({ detail, rows }: Props) {
 
         <div>
           <div className="mb-1 text-xs uppercase opacity-70">
-            {chartKind === "histogram" ? "対象カラム（数値）" : "Y 軸（数値・複数選択可）"}
+            {chartKind === "histogram"
+              ? "対象カラム（数値）"
+              : chartKind === "box"
+                ? "比較カラム（数値・複数選択可）"
+                : "Y 軸（数値・複数選択可）"}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {numericColumns.length === 0 ? (
@@ -241,6 +249,15 @@ export function ChartsWorkbench({ detail, rows }: Props) {
         {chartKind === "histogram" && (
           <HistogramView columnName={histogramSource} bins={histogramData} />
         )}
+        {chartKind === "box" && (
+          <BoxPlot
+            series={yColumns.map((name, i) => ({
+              label: name,
+              values: extractNumericSeries(rows, name),
+              color: SERIES_COLORS[i % SERIES_COLORS.length] ?? "#4f8cff",
+            }))}
+          />
+        )}
       </section>
     </div>
   );
@@ -342,8 +359,6 @@ function buildBarData(
   });
   return { data, categories: [...categorySet] };
 }
-
-const SERIES_COLORS = ["#4f8cff", "#f59e0b", "#10b981", "#e11d48", "#8b5cf6", "#14b8a6"];
 
 function LineChartView({
   data,

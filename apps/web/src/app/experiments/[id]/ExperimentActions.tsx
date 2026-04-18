@@ -40,6 +40,13 @@ export function ExperimentActions({ id }: { id: string }) {
         >
           JSON
         </a>
+        <a
+          href={exportExperimentUrl(id, "xlsx")}
+          className="rounded-md bg-white/10 px-3 py-1.5 hover:bg-white/15"
+          download
+        >
+          XLSX
+        </a>
       </div>
       <button
         type="button"

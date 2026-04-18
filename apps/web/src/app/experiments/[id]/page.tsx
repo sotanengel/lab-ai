@@ -1,3 +1,4 @@
+import { Markdown } from "@/components/Markdown";
 import {
   ApiError,
   fetchAdviceNotes,
@@ -125,9 +126,9 @@ export default async function ExperimentDetailPage({ params }: PageProps) {
                     {new Date(note.createdAt).toLocaleString("ja-JP")}
                   </div>
                   <div className="mt-1 font-medium">{note.title}</div>
-                  <pre className="mt-2 whitespace-pre-wrap font-sans text-sm opacity-85">
-                    {note.body}
-                  </pre>
+                  <div className="mt-2 text-sm opacity-90">
+                    <Markdown>{note.body}</Markdown>
+                  </div>
                 </li>
               ))}
             </ul>

@@ -18,6 +18,7 @@
     "@lab-ai/db": "workspace:*",
     "@lab-ai/shared": "workspace:*",
     "drizzle-orm": "0.36.0",
+    "exceljs": "4.4.0",
     "hono": "4.6.7",
     "nanoid": "5.0.7",
     "pino": "9.5.0",
